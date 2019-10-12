@@ -65,6 +65,7 @@ int colorSelectorStatus = INACTIVE;
 
 /*****************************************************
  *
+ * Init the MMU, pin, Serial, ...
  *
  *****************************************************/
 void Application::setup()
@@ -150,28 +151,8 @@ continue_processing:
 
 } // end of init() routine
 
-/**
- * Serial read until new line
- */
-String ReadSerialStrUntilNewLine()
-{
-	String str = "";
-	char c = -1;
-	while ((c != '\n') && (c != '\r'))
-	{
-		if (Serial.available())
-		{
-			c = char(Serial.read());
-			if (c != -1)
-			{
-				str += c;
-			}
-		}
-	}
-	return str;
-}
-
 /*****************************************************
+ * 
  * infinite loop - core of the program
  *
  *****************************************************/
@@ -179,9 +160,10 @@ void Application::loop()
 {
 	String kbString;
 
-	// println_log(F("looping"));
-	delay(100);				// wait for 100 milliseconds
-	checkSerialInterface(); // check the serial interface for input commands from the mk3
+    // wait for 100 milliseconds
+	delay(100);				
+    // check the serial interface for input commands from the mk3
+	checkSerialInterface();
 
 #ifdef SERIAL_DEBUG
 	// check for keyboard input
@@ -202,21 +184,14 @@ void Application::loop()
 			println_log(F("Processing 'T' Command"));
 			if ((kbString[1] >= '0') && (kbString[1] <= '4'))
 			{
-				toolChange(kbString[1]); // invoke the tool change command
-										 //toolChange(c2);
-										 // processKeyboardInput();
-			}
-			else
-			{
+				toolChange(kbString[1]); 
+			}else{
 				println_log(F("T: Invalid filament Selection"));
 			}
 		}
 		if (kbString[0] == 'U')
 		{
 			println_log(F("Processing 'U' Command"));
-
-			// parkIdler();                      // reset the idler               // added on 10.7.18 ... get in known state
-
 			if (idlerStatus == QUICKPARKED)
 			{
 				quickUnParkIdler(); // un-park the idler from a quick park
@@ -226,7 +201,6 @@ void Application::loop()
 				unParkIdler(); // turn on the idler motor
 			}
 			unloadFilamentToFinda(); //unload the filament
-
 			parkIdler(); // park the idler motor and turn it off
 		}
 #ifdef DEBUGMODE
@@ -315,6 +289,38 @@ void Application::loop()
 
 } // end of infinite loop
 
+/***************************************************************************************************************
+ ***************************************************************************************************************
+ * 
+ * SERIAL
+ * 
+ ***************************************************************************************************************
+ **************************************************************************************************************/
+
+
+/*****************************************************
+ * 
+ * Serial read until new line
+ * 
+ *****************************************************/
+String ReadSerialStrUntilNewLine()
+{
+	String str = "";
+	char c = -1;
+	while ((c != '\n') && (c != '\r'))
+	{
+		if (Serial.available())
+		{
+			c = char(Serial.read());
+			if (c != -1)
+			{
+				str += c;
+			}
+		}
+	}
+	return str;
+}
+
 /*****************************************************
  *
  * Handle command from the Printer
@@ -375,7 +381,6 @@ void checkSerialInterface()
 
 		case 'U':
 			// request for filament unload
-
 			println_log(F("U: Filament Unload Selected"));
 			if (idlerStatus == QUICKPARKED)
 			{
@@ -385,7 +390,6 @@ void checkSerialInterface()
 			{
 				unParkIdler(); // turn on the idler motor
 			}
-
 			if ((c2 >= '0') && (c2 <= '4'))
 			{
 				unloadFilamentToFinda();
@@ -412,10 +416,8 @@ void checkSerialInterface()
 			{
 				unParkIdler(); // turn on the idler motor
 			}
-
 			if (colorSelectorStatus == INACTIVE)
 				activateColorSelector(); // turn on the color selector motor
-
 			if ((c2 >= '0') && (c2 <= '4'))
 			{
 				println_log(F("L: Moving the bearing idler"));
@@ -423,14 +425,10 @@ void checkSerialInterface()
 				println_log(F("L: Moving the color selector"));
 				colorSelector(c2); // move the color Selector stepper Motor to the right spot
 				println_log(F("L: Loading the Filament"));
-				// loadFilament(CCW);
 				loadFilamentToFinda();
 				parkIdler(); // turn off the idler roller
-
 				println_log(F("L: Sending Filament Load Acknowledge to MK3"));
-
 				delay(200);
-
 				Serial1.print(F("ok\n"));
 			}
 			else
@@ -474,7 +472,6 @@ void checkSerialInterface()
 				Serial1.print(F("1"));
 			}
 			Serial1.print(F("ok\n"));
-
 			break;
 		case 'F': 
 		    // 'F' command is acknowledged but no processing goes on at the moment
@@ -486,7 +483,6 @@ void checkSerialInterface()
 		default:
 			print_log(F("ERROR: unrecognized command from the MK3 controller"));
 			Serial1.print(F("ok\n"));
-
 		} // end of switch statement
 
 	} // end of cnt > 0 check
@@ -500,9 +496,73 @@ void checkSerialInterface()
 
 /*****************************************************
  *
+ * this routine is the common routine called for fixing the filament issues (loading or unloading)
+ *
+ *****************************************************/
+void fixTheProblem(String statement)
+{
+	println_log(F(""));
+	println_log(F("********************* ERROR ************************"));
+	println_log(statement); // report the error to the user
+	println_log(F("********************* ERROR ************************"));
+	println_log(F("Clear the problem and then hit any key to continue "));
+	println_log(F(""));
+
+	parkIdler();								   // park the idler stepper motor
+	digitalWrite(colorSelectorEnablePin, DISABLE); // turn off the selector stepper motor
+
+#ifdef SERIAL_DEBUG
+	while (!Serial.available())
+	{
+		//  wait until key is entered to proceed  (this is to allow for operator intervention)
+	}
+	Serial.readString(); // clear the keyboard buffer
+#endif
+
+	unParkIdler();								  // put the idler stepper motor back to its' original position
+	digitalWrite(colorSelectorEnablePin, ENABLE); // turn ON the selector stepper motor
+	delay(1);									  // wait for 1 millisecond
+}
+
+/***************************************************************************************************************
+ ***************************************************************************************************************
+ * 
+ * COLOR SELECTOR
+ * 
+ ***************************************************************************************************************
+ **************************************************************************************************************/
+
+/*****************************************************
+ *
  * Select the color : selection (0..4)
  * 
  *****************************************************/
+
+/*****************************************************
+ *
+ *
+ *****************************************************/
+void deActivateColorSelector()
+{
+//FIXME : activate it by default
+#ifdef TURNOFFSELECTORMOTOR
+	digitalWrite(colorSelectorEnablePin, DISABLE); // turn off the color selector stepper motor  (nice to do, cuts down on CURRENT utilization)
+	delay(1);
+	colorSelectorStatus = INACTIVE;
+#endif
+}
+
+/*****************************************************
+ *
+ *
+ *****************************************************/
+void activateColorSelector()
+{
+	digitalWrite(colorSelectorEnablePin, ENABLE);
+	delay(1);
+	colorSelectorStatus = ACTIVE;
+}
+
 void colorSelector(char selection)
 {
 	if ((selection < '0') || (selection > '4'))
@@ -577,36 +637,6 @@ loop:
 
 /*****************************************************
  *
- * this routine is the common routine called for fixing the filament issues (loading or unloading)
- *
- *****************************************************/
-void fixTheProblem(String statement)
-{
-	println_log(F(""));
-	println_log(F("********************* ERROR ************************"));
-	println_log(statement); // report the error to the user
-	println_log(F("********************* ERROR ************************"));
-	println_log(F("Clear the problem and then hit any key to continue "));
-	println_log(F(""));
-
-	parkIdler();								   // park the idler stepper motor
-	digitalWrite(colorSelectorEnablePin, DISABLE); // turn off the selector stepper motor
-
-#ifdef SERIAL_DEBUG
-	while (!Serial.available())
-	{
-		//  wait until key is entered to proceed  (this is to allow for operator intervention)
-	}
-	Serial.readString(); // clear the keyboard buffer
-#endif
-
-	unParkIdler();								  // put the idler stepper motor back to its' original position
-	digitalWrite(colorSelectorEnablePin, ENABLE); // turn ON the selector stepper motor
-	delay(1);									  // wait for 1 millisecond
-}
-
-/*****************************************************
- *
  * this is the selector motor with the lead screw (final stage of the MMU2 unit)
  * 
  *****************************************************/
@@ -649,6 +679,148 @@ void csTurnAmount(int steps, int direction)
 #endif
 }
 
+/*****************************************************
+ *
+ * Home the Color Selector
+ * perform this function only at power up/reset
+ * 
+ *****************************************************/
+void initColorSelector()
+{
+
+	digitalWrite(colorSelectorEnablePin, ENABLE); // turn on the stepper motor
+	delay(1);									  // wait for 1 millisecond
+	csTurnAmount(MAXSELECTOR_STEPS, CW);				   // move to the right
+	csTurnAmount(MAXSELECTOR_STEPS + CS_RIGHT_FORCE, CCW); // move all the way to the left
+	digitalWrite(colorSelectorEnablePin, DISABLE); // turn off the stepper motor
+}
+
+/*****************************************************
+ *
+ * Re-Sync Color Selector
+ * this function is performed by the 'T' command after so many moves to make sure the colorselector is synchronized
+ *
+ *****************************************************/
+void syncColorSelector()
+{
+	int moveSteps;
+
+	digitalWrite(colorSelectorEnablePin, ENABLE); // turn on the selector stepper motor
+	delay(1);									  // wait for 1 millecond
+
+	print_log(F("syncColorSelelector()   current Filament selection: "));
+	println_log(filamentSelection);
+
+	moveSteps = MAXSELECTOR_STEPS - selectorAbsPos[filamentSelection];
+
+	print_log(F("syncColorSelector()   moveSteps: "));
+	println_log(moveSteps);
+
+	csTurnAmount(moveSteps, CW);			   // move all the way to the right
+	csTurnAmount(MAXSELECTOR_STEPS + CS_RIGHT_FORCE, CCW); // move all the way to the left
+	//FIXME : turn of motor ???
+	//digitalWrite(colorSelectorEnablePin, DISABLE); // turn off the stepper motor
+}
+
+/***************************************************************************************************************
+ ***************************************************************************************************************
+ * 
+ * IDLER
+ * 
+ ***************************************************************************************************************
+ **************************************************************************************************************/
+
+
+/*****************************************************
+ *
+ * Home the idler
+ * perform this function only at power up/reset
+ *
+ *****************************************************/
+void initIdlerPosition()
+{
+
+	digitalWrite(idlerEnablePin, ENABLE); // turn on the roller bearing motor
+	delay(1);
+	oldBearingPosition = 125; // points to position #1
+	idlerturnamount(MAXROLLERTRAVEL, CW);
+	idlerturnamount(MAXROLLERTRAVEL, CCW); // move the bearings out of the way
+	digitalWrite(idlerEnablePin, DISABLE); // turn off the idler roller bearing motor
+
+	filamentSelection = 0; // keep track of filament selection (0,1,2,3,4))
+	currentExtruder = '0';
+}
+
+/*****************************************************
+ *
+ * this routine drives the 5 position bearings (aka idler, on the top of the MMU2 carriage)
+ * filament 0..4 -> the position
+ *
+ *****************************************************/
+void idlerSelector(char filament)
+{
+	int newBearingPosition;
+	int newSetting;
+
+#ifdef DEBUG
+	print_log(F("idlerSelector(): Filament Selected: "));
+	println_log(filament);
+#endif
+
+	digitalWrite(extruderEnablePin, ENABLE);
+	if ((filament < '0') || (filament > '4'))
+	{
+		println_log(F("idlerSelector() ERROR, invalid filament selection"));
+		print_log(F("idlerSelector() filament: "));
+		println_log(filament);
+		return;
+	}
+
+#ifdef DEBUG
+	print_log(F("Old Idler Roller Bearing Position:"));
+	println_log(oldBearingPosition);
+	println_log(F("Moving filament selector"));
+#endif
+
+	switch (filament)
+	{
+	case '0':
+		newBearingPosition = bearingAbsPos[0]; // idler set to 1st position
+		filamentSelection = 0;
+		currentExtruder = '0';
+		break;
+	case '1':
+		newBearingPosition = bearingAbsPos[1];
+		filamentSelection = 1;
+		currentExtruder = '1';
+		break;
+	case '2':
+		newBearingPosition = bearingAbsPos[2];
+		filamentSelection = 2;
+		currentExtruder = '2';
+		break;
+	case '3':
+		newBearingPosition = bearingAbsPos[3];
+		filamentSelection = 3;
+		currentExtruder = '3';
+		break;
+	case '4':
+		newBearingPosition = bearingAbsPos[4];
+		filamentSelection = 4;
+		currentExtruder = '4';
+		break;
+	default:
+		println_log(F("idlerSelector(): ERROR, Invalid Idler Bearing Position"));
+		break;
+	}
+
+	newSetting = newBearingPosition - oldBearingPosition;
+	if (newSetting < 0)
+		idlerturnamount(-newSetting, CW); // turn idler to appropriate position
+	else
+		idlerturnamount(newSetting, CCW); // turn idler to appropriate position
+	oldBearingPosition = newBearingPosition;
+}
 
 /*****************************************************
  *
@@ -671,6 +843,78 @@ void idlerturnamount(int steps, int dir)
 		delayMicroseconds(IDLERMOTORDELAY);
 	}
 } // end of idlerturnamount() routine
+
+
+/***************************************************************************************************************
+ ***************************************************************************************************************
+ * 
+ * EXTRUDER
+ * 
+ ***************************************************************************************************************
+ **************************************************************************************************************/
+
+/*****************************************************
+ *
+ * this routine feeds filament by the amount of steps provided
+ * stoptoextruder when mk3 switch detect it (only if switch is before mk3 gear)
+ * 144 steps = 1mm of filament (using the current mk8 gears in the MMU2)
+ *
+ *****************************************************/
+void feedFilament(unsigned int steps, int stoptoextruder)
+{
+	for (unsigned int i = 0; i <= steps; i++)
+	{
+		digitalWrite(extruderStepPin, HIGH);
+		delayMicroseconds(PINHIGH); // delay for 10 useconds
+		digitalWrite(extruderStepPin, LOW);
+		delayMicroseconds(PINLOW); // delay for 10 useconds
+
+		delayMicroseconds(EXTRUDERMOTORDELAY); // wait for 400 useconds
+		//delay(delayValue);           // wait for 30 milliseconds
+		if ((stoptoextruder) && isFilamentLoadedtoExtruder())
+			break;
+	}
+}
+
+/***************************************************************************************************************
+ ***************************************************************************************************************
+ * 
+ * FILAMENT SENSORS
+ * 
+ ***************************************************************************************************************
+ **************************************************************************************************************/
+
+/*****************************************************
+ *
+ * Check if Filament is loaded into MMU pinda
+ *
+ *****************************************************/
+int isFilamentLoadedPinda()
+{
+	int findaStatus;
+	findaStatus = digitalRead(findaPin);
+	return (findaStatus);
+}
+
+/*****************************************************
+ *
+ * Check if Filament is loaded into extruder
+ *
+ *****************************************************/
+bool isFilamentLoadedtoExtruder()
+{
+	int fStatus;
+	fStatus = digitalRead(filamentSwitch);
+	return (fStatus == filamentSwitchON);
+}
+
+/***************************************************************************************************************
+ ***************************************************************************************************************
+ * 
+ * LOAD / UNLOAD FILAMENT
+ * 
+ ***************************************************************************************************************
+ **************************************************************************************************************/
 
 /*****************************************************
  *
@@ -767,163 +1011,13 @@ loop:
 	feedFilament(STEPSPERMM * UNLOAD_LENGTH_BACK_COLORSELECTOR, IGNORE_STOP_AT_EXTRUDER);
 }
 
-/*****************************************************
- *
- * this routine feeds filament by the amount of steps provided
- * stoptoextruder when mk3 switch detect it (only if switch is before mk3 gear)
- * 144 steps = 1mm of filament (using the current mk8 gears in the MMU2)
- *
- *****************************************************/
-void feedFilament(unsigned int steps, int stoptoextruder)
-{
-	for (unsigned int i = 0; i <= steps; i++)
-	{
-		digitalWrite(extruderStepPin, HIGH);
-		delayMicroseconds(PINHIGH); // delay for 10 useconds
-		digitalWrite(extruderStepPin, LOW);
-		delayMicroseconds(PINLOW); // delay for 10 useconds
-
-		delayMicroseconds(EXTRUDERMOTORDELAY); // wait for 400 useconds
-		//delay(delayValue);           // wait for 30 milliseconds
-		if ((stoptoextruder) && isFilamentLoadedtoExtruder())
-			break;
-	}
-}
-
-/*****************************************************
- *
- * Home the idler
- * perform this function only at power up/reset
- *
- *****************************************************/
-void initIdlerPosition()
-{
-
-	digitalWrite(idlerEnablePin, ENABLE); // turn on the roller bearing motor
-	delay(1);
-	oldBearingPosition = 125; // points to position #1
-	idlerturnamount(MAXROLLERTRAVEL, CW);
-	idlerturnamount(MAXROLLERTRAVEL, CCW); // move the bearings out of the way
-	digitalWrite(idlerEnablePin, DISABLE); // turn off the idler roller bearing motor
-
-	filamentSelection = 0; // keep track of filament selection (0,1,2,3,4))
-	currentExtruder = '0';
-}
-
-/*****************************************************
- *
- * this routine drives the 5 position bearings (aka idler, on the top of the MMU2 carriage)
- * filament 0..4 -> the position
- *
- *****************************************************/
-void idlerSelector(char filament)
-{
-	int newBearingPosition;
-	int newSetting;
-
-#ifdef DEBUG
-	print_log(F("idlerSelector(): Filament Selected: "));
-	println_log(filament);
-#endif
-
-	digitalWrite(extruderEnablePin, ENABLE);
-	if ((filament < '0') || (filament > '4'))
-	{
-		println_log(F("idlerSelector() ERROR, invalid filament selection"));
-		print_log(F("idlerSelector() filament: "));
-		println_log(filament);
-		return;
-	}
-
-#ifdef DEBUG
-	print_log(F("Old Idler Roller Bearing Position:"));
-	println_log(oldBearingPosition);
-	println_log(F("Moving filament selector"));
-#endif
-
-	switch (filament)
-	{
-	case '0':
-		newBearingPosition = bearingAbsPos[0]; // idler set to 1st position
-		filamentSelection = 0;
-		currentExtruder = '0';
-		break;
-	case '1':
-		newBearingPosition = bearingAbsPos[1];
-		filamentSelection = 1;
-		currentExtruder = '1';
-		break;
-	case '2':
-		newBearingPosition = bearingAbsPos[2];
-		filamentSelection = 2;
-		currentExtruder = '2';
-		break;
-	case '3':
-		newBearingPosition = bearingAbsPos[3];
-		filamentSelection = 3;
-		currentExtruder = '3';
-		break;
-	case '4':
-		newBearingPosition = bearingAbsPos[4];
-		filamentSelection = 4;
-		currentExtruder = '4';
-		break;
-	default:
-		println_log(F("idlerSelector(): ERROR, Invalid Idler Bearing Position"));
-		break;
-	}
-
-	newSetting = newBearingPosition - oldBearingPosition;
-	if (newSetting < 0)
-		idlerturnamount(-newSetting, CW); // turn idler to appropriate position
-	else
-		idlerturnamount(newSetting, CCW); // turn idler to appropriate position
-	oldBearingPosition = newBearingPosition;
-}
-
-
-/*****************************************************
- *
- * Home the Color Selector
- * perform this function only at power up/reset
+/***************************************************************************************************************
+ ***************************************************************************************************************
  * 
- *****************************************************/
-void initColorSelector()
-{
-
-	digitalWrite(colorSelectorEnablePin, ENABLE); // turn on the stepper motor
-	delay(1);									  // wait for 1 millisecond
-	csTurnAmount(MAXSELECTOR_STEPS, CW);				   // move to the right
-	csTurnAmount(MAXSELECTOR_STEPS + CS_RIGHT_FORCE, CCW); // move all the way to the left
-	digitalWrite(colorSelectorEnablePin, DISABLE); // turn off the stepper motor
-}
-
-/*****************************************************
- *
- * Re-Sync Color Selector
- * this function is performed by the 'T' command after so many moves to make sure the colorselector is synchronized
- *
- *****************************************************/
-void syncColorSelector()
-{
-	int moveSteps;
-
-	digitalWrite(colorSelectorEnablePin, ENABLE); // turn on the selector stepper motor
-	delay(1);									  // wait for 1 millecond
-
-	print_log(F("syncColorSelelector()   current Filament selection: "));
-	println_log(filamentSelection);
-
-	moveSteps = MAXSELECTOR_STEPS - selectorAbsPos[filamentSelection];
-
-	print_log(F("syncColorSelector()   moveSteps: "));
-	println_log(moveSteps);
-
-	csTurnAmount(moveSteps, CW);			   // move all the way to the right
-	csTurnAmount(MAXSELECTOR_STEPS + CS_RIGHT_FORCE, CCW); // move all the way to the left
-	//FIXME : turn of motor ???
-	//digitalWrite(colorSelectorEnablePin, DISABLE); // turn off the stepper motor
-}
+ * PARK / UNPARK IDLER
+ * 
+ ***************************************************************************************************************
+ **************************************************************************************************************/
 
 /*****************************************************
  *
@@ -1073,30 +1167,92 @@ void specialUnParkIdler()
 	idlerStatus = ACTIVE; // mark the idler as active
 }
 
-/*****************************************************
- *
- *
- *****************************************************/
-void deActivateColorSelector()
-{
-//FIXME : activate it by default
-#ifdef TURNOFFSELECTORMOTOR
-	digitalWrite(colorSelectorEnablePin, DISABLE); // turn off the color selector stepper motor  (nice to do, cuts down on CURRENT utilization)
-	delay(1);
-	colorSelectorStatus = INACTIVE;
-#endif
-}
+/***************************************************************************************************************
+ ***************************************************************************************************************
+ * 
+ * TOOLCHANGE / LOAD TO MK3 / LOAD TO BONTECH GEAR
+ * 
+ ***************************************************************************************************************
+ **************************************************************************************************************/
 
 /*****************************************************
  *
+ * (T) Tool Change Command - this command is the core command used my the mk3 to drive the mmu2 filament selection
  *
  *****************************************************/
-void activateColorSelector()
+void toolChange(char selection)
 {
-	digitalWrite(colorSelectorEnablePin, ENABLE);
-	delay(1);
-	colorSelectorStatus = ACTIVE;
-}
+	int newExtruder;
+
+	++toolChangeCount; // count the number of tool changes
+	++trackToolChanges;
+
+	// automatic reset of the tracktoolchange counter since going to filament position '0' move the color selection ALL the way to the left
+	if (selection == '0')
+	{
+		trackToolChanges = 0;
+	}
+
+	print_log(F("Tool Change Count: "));
+	println_log(toolChangeCount);
+
+	newExtruder = selection - 0x30; // convert ASCII to a number (0-4)
+
+	if (newExtruder == filamentSelection)
+	{ // already at the correct filament selection
+		if (!isFilamentLoadedPinda())
+		{ // no filament loaded
+
+			println_log(F("toolChange: filament not currently loaded, loading ..."));
+
+			idlerSelector(selection); // move the filament selector stepper motor to the right spot
+			colorSelector(selection); // move the color Selector stepper Motor to the right spot
+			filamentLoadToMK3();
+			quickParkIdler(); 
+			repeatTCmdFlag = INACTIVE; // used to help the 'C' command to feed the filament again
+		}else{
+			println_log(F("toolChange:  filament already loaded to mk3 extruder"));
+			repeatTCmdFlag = ACTIVE; // used to help the 'C' command to not feed the filament again
+		}
+	}else{ 
+		// different filament position
+		repeatTCmdFlag = INACTIVE; // turn off the repeat Commmand Flag (used by 'C' Command)
+		if (isFilamentLoadedPinda())
+		{
+
+			println_log(F("toolChange: Unloading filament"));
+
+			idlerSelector(currentExtruder); // point to the current extruder
+			unloadFilamentToFinda(); // have to unload the filament first
+		}
+
+        // reset the color selector stepper motor (gets out of alignment)
+		if (trackToolChanges > TOOLSYNC)
+		{ 
+			println_log(F("toolChange: Synchronizing the Filament Selector Head"));
+			syncColorSelector();
+			//FIXME : add syncIdlerSelector here
+			activateColorSelector(); // turn the color selector motor back on
+			currentPosition = 0;	 // reset the color selector
+			trackToolChanges = 0;
+		}
+#ifdef DEBUG
+		println_log(F("toolChange: Selecting the proper Idler Location"));
+#endif
+		idlerSelector(selection);
+#ifdef DEBUG
+		println_log(F("toolChange: Selecting the proper Selector Location"));
+#endif
+		colorSelector(selection);
+#ifdef DEBUG
+		println_log(F("toolChange: Loading Filament: loading the new filament to the mk3"));
+#endif
+		filamentLoadToMK3(); // moves the idler and loads the filament
+		filamentSelection = newExtruder;
+		currentExtruder = selection;
+		quickParkIdler();
+	}
+} // end of ToolChange processing
 
 /*****************************************************
  *
@@ -1105,9 +1261,11 @@ void activateColorSelector()
  *****************************************************/
 void filamentLoadToMK3()
 {
+#ifdef FILAMENTSWITCH_BEFORE_EXTRUDER
 	int flag;
-	int filamentDistance;
 	int fStatus;
+	int filamentDistance;
+#endif
 	int startTime, currentTime;
 
 	if ((currentExtruder < '0') || (currentExtruder > '4'))
@@ -1122,8 +1280,6 @@ void filamentLoadToMK3()
 	println_log(currentExtruder);
 #endif
 
-	// idlerSelector(currentExtruder);        // active the idler before the filament load
-
 	deActivateColorSelector();
 
 	digitalWrite(extruderEnablePin, ENABLE); // turn on the extruder stepper motor (10.14.18)
@@ -1133,7 +1289,6 @@ void filamentLoadToMK3()
 	startTime = millis();
 
 loop:
-	// feedFilament(1);        // 1 step and then check the pinda status
 	feedFilament(STEPSPERMM, IGNORE_STOP_AT_EXTRUDER); // feed 1 mm of filament into the bowden tube
 
 	currentTime = millis();
@@ -1145,26 +1300,25 @@ loop:
 
 		startTime = millis();
 	}
-	if (!isFilamentLoadedPinda()) // keep feeding the filament until the pinda sensor triggers
+	// keep feeding the filament until the pinda sensor triggers
+	if (!isFilamentLoadedPinda()) 
 		goto loop;
-	//***************************************************************************************************
-	//* added additional check (10.10.18) - if the filament switch is already set this might mean there is a switch error or a clog
-	//*       this error condition can result in 'air printing'
-	//***************************************************************************************************************************
 loop1:
 	if (isFilamentLoadedtoExtruder())
-	{ // switch is active (this is not a good condition)
+	{ 
+		// switch is active (this is not a good condition)
 		fixTheProblem("FILAMENT LOAD ERROR: Filament Switch in the MK3 is active (see the RED LED), it is either stuck open or there is debris");
 		goto loop1;
 	}
 
-	feedFilament(STEPSPERMM * DIST_MMU_EXTRUDER, STOP_AT_EXTRUDER); // go DIST_MMU_EXTRUDER mm then look for the 2nd filament sensor
-	filamentDistance = DIST_MMU_EXTRUDER;
+    // go DIST_MMU_EXTRUDER mm
+	feedFilament(STEPSPERMM * DIST_MMU_EXTRUDER, STOP_AT_EXTRUDER); 
 
 #ifdef FILAMENTSWITCH_BEFORE_EXTRUDER
+    // insert until the 2nd filament sensor
+	filamentDistance = DIST_MMU_EXTRUDER;
 	startTime = millis();
 	flag = 0;
-	//filamentDistance = 0;
 
 	// wait until the filament sensor on the mk3 extruder head (microswitch) triggers
 	while (flag == 0)
@@ -1172,7 +1326,7 @@ loop1:
 
 		currentTime = millis();
 		if ((currentTime - startTime) > TIMEOUT_LOAD_UNLOAD)
-		{ // only wait for 8 seconds
+		{ 
 			fixTheProblem("FILAMENT LOAD ERROR: Filament not detected by the MK3 filament sensor, check the bowden tube for clogging/binding");
 			startTime = millis(); // reset the start Time
 		}
@@ -1181,197 +1335,21 @@ loop1:
 		// read the filament switch on the mk3 extruder
 		if (isFilamentLoadedtoExtruder())
 		{
-			// println_log(F("filament switch triggered"));
 			flag = 1;
-
 			print_log(F("Filament distance traveled (mm): "));
 			println_log(filamentDistance);
 		}
 	}
 
 	// feed filament an additional DIST_EXTRUDER_BTGEAR mm to hit the middle of the bondtech gear
-	// go an additional 3DIST_EXTRUDER_BTGEAR2mm (increased to DIST_EXTRUDER_BTGEAR on 10.4.18)
+	// go an additional DIST_EXTRUDER_BTGEAR
 	feedFilament(STEPSPERMM * DIST_EXTRUDER_BTGEAR, IGNORE_STOP_AT_EXTRUDER);
 #endif
 }
 
 /*****************************************************
  *
- *
- *****************************************************/
-int isFilamentLoadedPinda()
-{
-	int findaStatus;
-
-	findaStatus = digitalRead(findaPin);
-	return (findaStatus);
-}
-
-/*****************************************************
- *
- *
- *****************************************************/
-bool isFilamentLoadedtoExtruder()
-{
-	int fStatus;
-
-	fStatus = digitalRead(filamentSwitch);
-	return (fStatus == filamentSwitchON);
-}
-
-//
-// (T) Tool Change Command - this command is the core command used my the mk3 to drive the mmu2 filament selection
-//
-/*****************************************************
- *
- *
- *****************************************************/
-void toolChange(char selection)
-{
-	int newExtruder;
-
-	++toolChangeCount; // count the number of tool changes
-	++trackToolChanges;
-
-	//**********************************************************************************
-	// * 10.10.18 added an automatic reset of the tracktoolchange counter since going to
-	//            filament position '0' move the color selection ALL the way to the left
-	//*********************************************************************************
-	if (selection == '0')
-	{
-		// println_log(F("toolChange()  filament '0' selected: resetting tracktoolchanges counter"));
-		trackToolChanges = 0;
-	}
-
-	print_log(F("Tool Change Count: "));
-	println_log(toolChangeCount);
-
-	newExtruder = selection - 0x30; // convert ASCII to a number (0-4)
-
-	//***********************************************************************************************
-	// code snippet added on 10.8.18 to help the 'C' command processing (happens after 'T' command
-	//***********************************************************************************************
-	if (newExtruder == filamentSelection)
-	{ // already at the correct filament selection
-
-		if (!isFilamentLoadedPinda())
-		{ // no filament loaded
-
-			println_log(F("toolChange: filament not currently loaded, loading ..."));
-
-			idlerSelector(selection); // move the filament selector stepper motor to the right spot
-			colorSelector(selection); // move the color Selector stepper Motor to the right spot
-			filamentLoadToMK3();
-			quickParkIdler(); // command moved here on 10.13.18
-			//****************************************************************************************
-			//*  added on 10.8.18 to help the 'C' command
-			//***************************************************************************************
-			repeatTCmdFlag = INACTIVE; // used to help the 'C' command
-									   //loadFilamentToFinda();
-		}
-		// #ifndef FILAMENTSWITCH_BEFORE_EXTRUDER
-		// 		else if (!isFilamentLoadedtoExtruder())
-		// 		{
-		// 			//  filament loaded in pinda but not mk3
-
-		// 			println_log(F("toolChange: filament not currently loaded to mk3, loading ..."));
-
-		// 			filamentLoadToMK3();
-		// 			quickParkIdler(); // command moved here on 10.13.18
-		// 			//****************************************************************************************
-		// 			//*  added on 10.8.18 to help the 'C' command
-		// 			//***************************************************************************************
-		// 			repeatTCmdFlag = INACTIVE; // used to help the 'C' command
-		// 									   //loadFilamentToFinda();
-		// 		}
-		// #endif
-		else
-		{
-			println_log(F("toolChange:  filament already loaded to mk3 extruder"));
-			//*********************************************************************************************
-			//* added on 10.8.18 to help the 'C' Command
-			//*********************************************************************************************
-			repeatTCmdFlag = ACTIVE; // used to help the 'C' command to not feed the filament again
-		}
-
-		//                               else {                           // added on 9.24.18 to
-		//                                     println_log(F("Filament already loaded, unloading the filament"));
-		//                                     idlerSelector(selection);
-		//                                     unloadFilamentToFinda();
-		//                               }
-	}
-	else
-	{ // different filament position
-		//********************************************************************************************
-		//* added on 19.8.18 to help the 'C' Command
-		//************************************************************************************************
-		repeatTCmdFlag = INACTIVE; // turn off the repeat Commmand Flag (used by 'C' Command)
-		if (isFilamentLoadedPinda())
-		{
-			//**************************************************************
-			// added on 10.5.18 to get the idler into the correct state
-			// idlerSelector(currentExtruder);
-			//**************************************************************
-#ifdef DEBUG
-			println_log(F("Unloading filament"));
-#endif
-
-			idlerSelector(currentExtruder); // point to the current extruder
-
-			unloadFilamentToFinda(); // have to unload the filament first
-		}
-
-		if (trackToolChanges > TOOLSYNC)
-		{ // reset the color selector stepper motor (gets out of alignment)
-			println_log(F("Synchronizing the Filament Selector Head"));
-			//*******************************
-			// NOW HAVE A MORE ELEGANT APPROACH - syncColorSelector (and it works)
-			// *******************************
-			syncColorSelector();
-			//initColorSelector();              // reset the color selector
-
-			activateColorSelector(); // turn the color selector motor back on
-			currentPosition = 0;	 // reset the color selector
-
-			// colorSelector('0');                       // move selector head to position 0
-
-			trackToolChanges = 0;
-		}
-#ifdef DEBUG
-		println_log(F("Selecting the proper Idler Location"));
-#endif
-		idlerSelector(selection);
-#ifdef DEBUG
-		println_log(F("Selecting the proper Selector Location"));
-#endif
-		colorSelector(selection);
-#ifdef DEBUG
-		println_log(F("Loading Filament: loading the new filament to the mk3"));
-#endif
-
-		filamentLoadToMK3(); // moves the idler and loads the filament
-
-		filamentSelection = newExtruder;
-		currentExtruder = selection;
-		quickParkIdler(); // command moved here on 10.13.18
-	}
-
-	//******************************************************************************************
-	//* barely move the idler out of the way
-	//* WARNING:  THIS MAY NOT WORK PROPERLY ... NEEDS TO BE DEBUGGED (10.7.18)
-	//******************************************************************************************
-	// quickParkIdler();                       // 10.7.2018 ... attempt to speed up idler for the follow-on 'C' command
-
-	//******************************************************************************************
-	//* this was how it was normally done until the above command was attempted
-	//******************************************************************************************
-	//parkIdler();                            // move the idler away
-
-} // end of ToolChange processing
-
-// part of the 'C' command,  does the last little bit to load into the past the extruder gear
-/*****************************************************
- *
+ * part of the 'C' command,  does the last little bit to load into the past the extruder gear
  *
  *****************************************************/
 bool filamentLoadWithBondTechGear()
@@ -1381,9 +1359,7 @@ bool filamentLoadWithBondTechGear()
 	int stepCount;
 	int tSteps;
 
-	//*****************************************************************************************************************
-	//*  added this code snippet to not process a 'C' command that is essentially a repeat command
-
+	// added this code snippet to not process a 'C' command that is essentially a repeat command
 	if (repeatTCmdFlag == ACTIVE)
 	{
 		println_log(F("filamentLoadWithBondTechGear(): filament already loaded and 'C' command already processed"));
@@ -1403,57 +1379,24 @@ bool filamentLoadWithBondTechGear()
 		currentExtruder = '0';
 	}
 
-	//*************************************************************************************************
-	//* change of approach to speed up the IDLER engagement 10.7.18
-	//*  WARNING: THIS APPROACH MAY NOT WORK ... NEEDS TO BE DEBUGGED
-	//*  C command assumes there is always a T command right before it
-	//*  (IF 2 'C' commands are issued by the MK3 in a row the code below might be an issue)
-	//*
-	//*************************************************************************************************
 
 	if (idlerStatus == QUICKPARKED)
-	{ // make sure idler is  in the pending state (set by quickparkidler() routine)
-		// println_log(F("'C' Command: quickUnParking the Idler"));
-		// quickUnParkIdler();
-		specialUnParkIdler(); // PLACEHOLDER attempt to speed up the idler engagement a little more 10.13.18
+	{ 
+		specialUnParkIdler(); 
 	}
 	if (idlerStatus == INACTIVE)
 	{
 		unParkIdler();
 	}
 
-	//*************************************************************************************************
-	//* following line of code is currently disabled (in order to test out the code above
-	//*  NOTE: I don't understand why the unParkIdler() command is not used instead ???
-	//************************************************************************************************
-	// idlerSelector(currentExtruder);        // move the idler back into position
-
 	stepCount = 0;
 	digitalWrite(greenLED, HIGH); // turn on the green LED (for debug purposes)
-	//*******************************************************************************************
-	// feed the filament from the MMU2 into the bondtech gear for 2 seconds at 10 mm/sec
-	// STEPPERMM : 144, 1: duration in seconds,  21: feed rate (in mm/sec)
-	// delay: 674 (for 10 mm/sec)
-	// delay: 350 (for 21 mm/sec)
-	// LOAD_DURATION:  1 second (time to spend with the mmu2 extruder active)
-	// LOAD_SPEED: 21 mm/sec  (determined by Slic3r settings
-	// INSTRUCTION_DELAY:  25 useconds  (time to do the instructions in the loop below, excluding the delayFactor)
-	// #define LOAD_DURATION 1000       (load duration in milliseconds, currently set to 1 second)
-	// #define LOAD_SPEED 21    // load speed (in mm/sec) during the 'C' command (determined by Slic3r setting)
-	// #define INSTRUCTION_DELAY 25  // delay (in microseconds) of the loop
 
-	// *******************************************************************************************
-	// compute the loop delay factor (eventually this will replace the '350' entry in the loop)
-	//       this computed value is in microseconds of time
-	//********************************************************************************************
-	// delayFactor = ((LOAD_DURATION * 1000.0) / (LOAD_SPEED * STEPSPERMM)) - INSTRUCTION_DELAY;   // compute the delay factor (in microseconds)
-
-	// for (i = 0; i < (STEPSPERMM * 1 * 21); i++) {
-
+	// feed the filament from the MMU2 into the bondtech gear 
 	tSteps = STEPSPERMM * ((float)LOAD_DURATION / 1000.0) * LOAD_SPEED;			// compute the number of steps to take for the given load duration
-	delayFactor = (float(LOAD_DURATION * 1000.0) / tSteps) - INSTRUCTION_DELAY; // 2nd attempt at delayFactor algorithm
+	delayFactor = (float(LOAD_DURATION * 1000.0) / tSteps) - INSTRUCTION_DELAY; // delayFactor algorithm
 
-	digitalWrite(extruderEnablePin, ENABLE); // turn on the extruder stepper motor (10.14.18)
+	digitalWrite(extruderEnablePin, ENABLE); // turn on the extruder stepper motor 
 	digitalWrite(extruderDirPin, CCW);		 // set extruder stepper motor to push filament towards the mk3
 
 	for (i = 0; i < tSteps; i++)
@@ -1461,11 +1404,7 @@ bool filamentLoadWithBondTechGear()
 		digitalWrite(extruderStepPin, HIGH); // step the extruder stepper in the MMU2 unit
 		delayMicroseconds(PINHIGH);
 		digitalWrite(extruderStepPin, LOW);
-		//*****************************************************************************************************
-		// replace '350' with delayFactor once testing of variable is complete
-		//*****************************************************************************************************
-		// after further testing, the '350' can be replaced by delayFactor
-		delayMicroseconds(delayFactor); // this was calculated in order to arrive at a 10mm/sec feed rate
+		delayMicroseconds(delayFactor); 
 		++stepCount;
 	}
 	digitalWrite(greenLED, LOW); // turn off the green LED (for debug purposes)
@@ -1473,19 +1412,10 @@ bool filamentLoadWithBondTechGear()
 #ifdef DEBUG
 	println_log(F("C Command: parking the idler"));
 #endif
-	//***************************************************************************************************************************
-	//*  this disengags the idler pulley after the 'C' command has been exectuted
-	//***************************************************************************************************************************
-	// quickParkIdler();                           // changed to quickparkidler on 10.12.18 (speed things up a bit)
 
-	specialParkIdler(); // PLACEHOLDER (experiment attempted on 10.13.18)
-
-	//parkIdler();                               // turn OFF the idler rollers when filament is loaded
-
-	//*********************************************************************************************
-	//* going back to the fundamental approach with the idler
-	//*********************************************************************************************
-	parkIdler(); // cleanest way to deal with the idler
+    // FIXME : specialParkIdler() or parkIdler() ???
+	specialParkIdler();
+	parkIdler(); 
 
 
 #ifndef FILAMENTSWITCH_BEFORE_EXTRUDER
@@ -1493,21 +1423,26 @@ bool filamentLoadWithBondTechGear()
 	delay(FILAMENT_TO_MK3_C0_WAIT_TIME);
 	if (isFilamentLoadedtoExtruder())
 	{
-		println_log(F("filamentLoadToMK3(): Loading Filament to Print Head Complete"));
+		println_log(F("filamentLoadWithBondTechGear(): Loading Filament to Print Head Complete"));
 		return true;
 	}
-	println_log(F("FILAMENT LOAD ERROR:  Filament not detected by EXTRUDER sensor, check the EXTRUDER"));
-	// Force mmu to load 5cm ???
-
+	println_log(F("filamentLoadWithBondTechGear() : FILAMENT LOAD ERROR:  Filament not detected by EXTRUDER sensor, check the EXTRUDER"));
 	return false;
 #endif
 
 #ifdef DEBUG
-	println_log(F("filamentLoadToMK3(): Loading Filament to Print Head Complete"));
+	println_log(F("filamentLoadWithBondTechGear(): Loading Filament to Print Head Complete"));
 #endif
 	return true;
 }
 
+/************************************************************************************************************/
+/************************************************************************************************************/
+/************************************************************************************************************/
+
+/*
+ * Nothing to do in the constructor
+ */
 Application::Application()
 {
 	// nothing to do in the constructor

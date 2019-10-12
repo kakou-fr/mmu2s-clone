@@ -8,6 +8,7 @@ extern bool isFilamentLoadedtoExtruder();
 
 extern void initIdlerPosition();
 extern void checkSerialInterface();
+extern String ReadSerialStrUntilNewLine();
 extern void initColorSelector();
 extern void filamentLoadToMK3();
 extern bool filamentLoadWithBondTechGear();
