@@ -10,7 +10,7 @@
 #define ENABLE LOW                // 8825 stepper motor enable is active low
 #define DISABLE HIGH              // 8825 stepper motor disable is active high
 
-#define MMU2_VERSION "4.3  04/07/19"
+#define MMU2_VERSION "5.0  10/11/19"
 
 #define STEPSPERMM  144ul           // these are the number of steps required to travel 1 mm using the extruder motor
 
@@ -97,7 +97,8 @@ int CSOFFSET[5] = {30,30,0,-15,-30};
 
 
 #define filamentSwitchON 0
-//#define FILAMENTSWITCH_BEFORE_EXTRUDER // turn on if the filament switch before is the extruder, turn off for the mk3s-mmu filament switch
+//#define FILAMENTSWITCH_BEFORE_EXTRUDER // turn on if the filament switch is before the extruder, turn off for the mk3s-mmu filament switch
+#define FILAMENTSWITCH_ON_EXTRUDER // turn on if the filament switch on is the extruder, turn on for the mk3s-mmu filament switch
 
 #ifdef GT2560
 // added this pin as a debug pin (lights a green LED so I can see the 'C0' command in action

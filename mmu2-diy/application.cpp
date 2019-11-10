@@ -112,8 +112,8 @@ continue_processing:
 	pinMode(idlerStepPin, OUTPUT);
 	pinMode(idlerEnablePin, OUTPUT);
 
-	pinMode(findaPin, INPUT); // MMU pinda Filament sensor
-	pinMode(filamentSwitch, INPUT); // extruder Filament sensor
+	pinMode(findaPin, INPUT);					// MMU pinda Filament sensor
+	pinMode(filamentSwitch, INPUT);				// extruder Filament sensor
 	pinMode(colorSelectorEnstop, INPUT_PULLUP); // enstop switch sensor
 
 	pinMode(extruderEnablePin, OUTPUT);
@@ -133,7 +133,7 @@ continue_processing:
 	digitalWrite(extruderEnablePin, DISABLE);	  //  DISABLE the extruder motor  (motor #2)
 	digitalWrite(colorSelectorEnablePin, DISABLE); // DISABLE the color selector motor  (motor #3)
 
-    // Initialize stepper
+	// Initialize stepper
 	println_log(F("Syncing the Idler Selector Assembly")); // do this before moving the selector motor
 	initIdlerPosition();								   // reset the roller bearing position
 
@@ -160,9 +160,9 @@ void Application::loop()
 {
 	String kbString;
 
-    // wait for 100 milliseconds
-	delay(100);				
-    // check the serial interface for input commands from the mk3
+	// wait for 100 milliseconds
+	delay(100);
+	// check the serial interface for input commands from the mk3
 	checkSerialInterface();
 
 #ifdef SERIAL_DEBUG
@@ -170,7 +170,7 @@ void Application::loop()
 
 	if (Serial.available())
 	{
-		print_log(F("Key was hit "));
+		println_log(F("Key was hit "));
 
 		kbString = ReadSerialStrUntilNewLine();
 
@@ -184,8 +184,10 @@ void Application::loop()
 			println_log(F("Processing 'T' Command"));
 			if ((kbString[1] >= '0') && (kbString[1] <= '4'))
 			{
-				toolChange(kbString[1]); 
-			}else{
+				toolChange(kbString[1]);
+			}
+			else
+			{
 				println_log(F("T: Invalid filament Selection"));
 			}
 		}
@@ -201,7 +203,7 @@ void Application::loop()
 				unParkIdler(); // turn on the idler motor
 			}
 			unloadFilamentToFinda(); //unload the filament
-			parkIdler(); // park the idler motor and turn it off
+			parkIdler();			 // park the idler motor and turn it off
 		}
 #ifdef DEBUGMODE
 		if (kbString[0] == 'D')
@@ -245,6 +247,18 @@ void Application::loop()
 			print_log(F("Extruder endstop status: "));
 			fstatus = digitalRead(filamentSwitch);
 			Serial.println(fstatus);
+			println_log(F("PINDA | EXTRUDER"));
+			while (true)
+			{
+				isFilamentLoadedPinda() ? print_log(F("ON    | ")) : print_log(F("OFF   | "));
+				isFilamentLoadedtoExtruder() ? println_log(F("ON")) : println_log(F("OFF"));
+				delay(200);
+				if (Serial.available())
+				{
+					ReadSerialStrUntilNewLine();
+					break;
+				}
+			}
 		}
 		else if (kbString[0] == 'A')
 		{
@@ -296,7 +310,6 @@ void Application::loop()
  * 
  ***************************************************************************************************************
  **************************************************************************************************************/
-
 
 /*****************************************************
  * 
@@ -352,7 +365,7 @@ void checkSerialInterface()
 
 		// process commands coming from the mk3 controller
 		//***********************************************************************************
-		// Commands still to be implemented:  
+		// Commands still to be implemented:
 		// X0 (MMU Reset)
 		// F0 (Filament type select),
 		// E0->E4 (Eject Filament)
@@ -473,8 +486,8 @@ void checkSerialInterface()
 			}
 			Serial1.print(F("ok\n"));
 			break;
-		case 'F': 
-		    // 'F' command is acknowledged but no processing goes on at the moment
+		case 'F':
+			// 'F' command is acknowledged but no processing goes on at the moment
 			// will be useful for flexible material down the road
 			println_log(F("Filament Type Selected: "));
 			println_log(c2);
@@ -507,7 +520,10 @@ void fixTheProblem(String statement)
 	println_log(F("********************* ERROR ************************"));
 	println_log(F("Clear the problem and then hit any key to continue "));
 	println_log(F(""));
-
+	println_log(F("PINDA | EXTRUDER"));
+	isFilamentLoadedPinda() ? print_log(F("ON    | ")) : print_log(F("OFF   | "));
+	isFilamentLoadedtoExtruder() ? println_log(F("ON")) : println_log(F("OFF"));
+	println_log(F(""));
 	parkIdler();								   // park the idler stepper motor
 	digitalWrite(colorSelectorEnablePin, DISABLE); // turn off the selector stepper motor
 
@@ -579,10 +595,10 @@ loop:
 
 	switch (selection)
 	{
-	case '0': 
-	    // position '0' is always just a move to the left
+	case '0':
+		// position '0' is always just a move to the left
 		// the '+CS_RIGHT_FORCE_SELECTOR_0' is an attempt to move the selector ALL the way left (puts the selector into known position)
-		csTurnAmount(currentPosition + CS_RIGHT_FORCE_SELECTOR_0, CCW); 
+		csTurnAmount(currentPosition + CS_RIGHT_FORCE_SELECTOR_0, CCW);
 		// Apply CSOFFSET
 		csTurnAmount((selectorAbsPos[0]), CW);
 		currentPosition = selectorAbsPos[0];
@@ -648,7 +664,7 @@ void csTurnAmount(int steps, int direction)
 		digitalWrite(colorSelectorDirPin, LOW); // set the direction for the Color Extruder Stepper Motor
 	else
 		digitalWrite(colorSelectorDirPin, HIGH);
-    // FIXME ??? NEEDED ???
+	// FIXME ??? NEEDED ???
 	// wait 1 milliseconds
 	delayMicroseconds(1500); // changed from 500 to 1000 microseconds on 10.6.18, changed to 1500 on 10.7.18)
 
@@ -663,18 +679,18 @@ void csTurnAmount(int steps, int direction)
 #endif
 
 	for (uint16_t i = 0; i <= (steps * STEPSIZE); i++)
-	{ 
+	{
 		digitalWrite(colorSelectorStepPin, HIGH);
 		delayMicroseconds(PINHIGH); // delay for 10 useconds
 		digitalWrite(colorSelectorStepPin, LOW);
-		delayMicroseconds(PINLOW);					// delay for 10 useconds 
+		delayMicroseconds(PINLOW);					// delay for 10 useconds
 		delayMicroseconds(COLORSELECTORMOTORDELAY); // wait for 60 useconds
 		//add enstop
 		if ((digitalRead(colorSelectorEnstop) == LOW) && (direction == CW))
 			break;
 	}
 
-#ifdef TURNOFFSELECTORMOTOR						   
+#ifdef TURNOFFSELECTORMOTOR
 	digitalWrite(colorSelectorEnablePin, DISABLE); // turn off the color selector motor
 #endif
 }
@@ -688,11 +704,11 @@ void csTurnAmount(int steps, int direction)
 void initColorSelector()
 {
 
-	digitalWrite(colorSelectorEnablePin, ENABLE); // turn on the stepper motor
-	delay(1);									  // wait for 1 millisecond
+	digitalWrite(colorSelectorEnablePin, ENABLE);		   // turn on the stepper motor
+	delay(1);											   // wait for 1 millisecond
 	csTurnAmount(MAXSELECTOR_STEPS, CW);				   // move to the right
 	csTurnAmount(MAXSELECTOR_STEPS + CS_RIGHT_FORCE, CCW); // move all the way to the left
-	digitalWrite(colorSelectorEnablePin, DISABLE); // turn off the stepper motor
+	digitalWrite(colorSelectorEnablePin, DISABLE);		   // turn off the stepper motor
 }
 
 /*****************************************************
@@ -716,10 +732,10 @@ void syncColorSelector()
 	print_log(F("syncColorSelector()   moveSteps: "));
 	println_log(moveSteps);
 
-	csTurnAmount(moveSteps, CW);			   // move all the way to the right
+	csTurnAmount(moveSteps, CW);						   // move all the way to the right
 	csTurnAmount(MAXSELECTOR_STEPS + CS_RIGHT_FORCE, CCW); // move all the way to the left
-	//FIXME : turn of motor ???
-	//digitalWrite(colorSelectorEnablePin, DISABLE); // turn off the stepper motor
+														   //FIXME : turn of motor ???
+														   //digitalWrite(colorSelectorEnablePin, DISABLE); // turn off the stepper motor
 }
 
 /***************************************************************************************************************
@@ -729,7 +745,6 @@ void syncColorSelector()
  * 
  ***************************************************************************************************************
  **************************************************************************************************************/
-
 
 /*****************************************************
  *
@@ -839,11 +854,10 @@ void idlerturnamount(int steps, int dir)
 		digitalWrite(idlerStepPin, HIGH);
 		delayMicroseconds(PINHIGH); // delay for 10 useconds
 		digitalWrite(idlerStepPin, LOW);
-		//delayMicroseconds(PINLOW);               // delay for 10 useconds 
+		//delayMicroseconds(PINLOW);               // delay for 10 useconds
 		delayMicroseconds(IDLERMOTORDELAY);
 	}
 } // end of idlerturnamount() routine
-
 
 /***************************************************************************************************************
  ***************************************************************************************************************
@@ -925,8 +939,8 @@ void loadFilamentToFinda()
 {
 	unsigned long startTime, currentTime;
 
-	digitalWrite(extruderEnablePin, ENABLE); 
-	digitalWrite(extruderDirPin, CCW);		 // set the direction of the MMU2 extruder motor
+	digitalWrite(extruderEnablePin, ENABLE);
+	digitalWrite(extruderDirPin, CCW); // set the direction of the MMU2 extruder motor
 	delay(1);
 
 	startTime = millis();
@@ -934,15 +948,15 @@ void loadFilamentToFinda()
 loop:
 	currentTime = millis();
 	if ((currentTime - startTime) > 10000)
-	{   // 10 seconds worth of trying to load the filament
+	{ // 10 seconds worth of trying to load the filament
 		fixTheProblem("UNLOAD FILAMENT ERROR:   timeout error, filament is not loaded to the FINDA sensor");
 		startTime = millis(); // reset the start time clock
 	}
 
-    // go 144 steps (1 mm) and then check the finda status
+	// go 144 steps (1 mm) and then check the finda status
 	feedFilament(STEPSPERMM, STOP_AT_EXTRUDER);
 
-    // keep feeding the filament until the pinda sensor triggers
+	// keep feeding the filament until the pinda sensor triggers
 	if (!isFilamentLoadedPinda())
 		goto loop;
 	//
@@ -950,7 +964,7 @@ loop:
 	//
 	digitalWrite(extruderDirPin, CW); // back the filament away from the selector
 	// after hitting the FINDA sensor, back away by UNLOAD_LENGTH_BACK_COLORSELECTOR mm
-	feedFilament(STEPSPERMM * UNLOAD_LENGTH_BACK_COLORSELECTOR, IGNORE_STOP_AT_EXTRUDER); 
+	feedFilament(STEPSPERMM * UNLOAD_LENGTH_BACK_COLORSELECTOR, IGNORE_STOP_AT_EXTRUDER);
 }
 
 /*****************************************************
@@ -963,7 +977,7 @@ void unloadFilamentToFinda()
 	unsigned long startTime, currentTime, startTime1;
 	// if the filament is already unloaded, do nothing
 	if (!isFilamentLoadedPinda())
-	{ 
+	{
 		println_log(F("unloadFilamentToFinda():  filament already unloaded"));
 		return;
 	}
@@ -979,21 +993,23 @@ loop:
 
 	currentTime = millis();
 
-    // read the filament switch (on the top of the mk3 extruder)
+	// read the filament switch (on the top of the mk3 extruder)
 	if (isFilamentLoadedtoExtruder())
-	{ 
+	{
 		// filament Switch is still ON, check for timeout condition
 		if ((currentTime - startTime1) > 2000)
 		{ // has 2 seconds gone by ?
-			fixTheProblem("UNLOAD FILAMENT ERROR: filament not unloading properly, stuck in mk3 head");
+			fixTheProblem("unloadFilamentToFinda(): UNLOAD FILAMENT ERROR: filament not unloading properly, stuck in mk3 head");
 			startTime1 = millis();
 		}
-	}else{ 
+	}
+	else
+	{
 		// check for timeout waiting for FINDA sensor to trigger
 		if ((currentTime - startTime) > TIMEOUT_LOAD_UNLOAD)
-		{ 
+		{
 			// 10 seconds worth of trying to unload the filament
-			fixTheProblem("UNLOAD FILAMENT ERROR: filament is not unloading properly, stuck between mk3 and mmu2");
+			fixTheProblem("unloadFilamentToFinda(): UNLOAD FILAMENT ERROR: filament is not unloading properly, stuck between mk3 and mmu2");
 			startTime = millis(); // reset the start time
 		}
 	}
@@ -1002,12 +1018,12 @@ loop:
 
 	// keep unloading until we hit the FINDA sensor
 	if (isFilamentLoadedPinda())
-	{ 
+	{
 		goto loop;
 	}
 
-    // back the filament away from the selector by UNLOAD_LENGTH_BACK_COLORSELECTOR mm
-	digitalWrite(extruderDirPin, CW); 
+	// back the filament away from the selector by UNLOAD_LENGTH_BACK_COLORSELECTOR mm
+	digitalWrite(extruderDirPin, CW);
 	feedFilament(STEPSPERMM * UNLOAD_LENGTH_BACK_COLORSELECTOR, IGNORE_STOP_AT_EXTRUDER);
 }
 
@@ -1034,13 +1050,12 @@ void parkIdler()
 	newSetting = MAXROLLERTRAVEL - oldBearingPosition;
 	oldBearingPosition = MAXROLLERTRAVEL; // record the current roller status  (CSK)
 
-	idlerturnamount(newSetting, CCW);	 // move the bearing roller out of the way
+	idlerturnamount(newSetting, CCW); // move the bearing roller out of the way
 	idlerStatus = INACTIVE;
 
-	digitalWrite(idlerEnablePin, DISABLE); // turn off the roller bearing stepper motor  (nice to do, cuts down on CURRENT utilization)
+	digitalWrite(idlerEnablePin, DISABLE);	// turn off the roller bearing stepper motor  (nice to do, cuts down on CURRENT utilization)
 	digitalWrite(extruderEnablePin, DISABLE); // turn off the extruder stepper motor as well
 }
-
 
 /*****************************************************
  *
@@ -1051,7 +1066,7 @@ void unParkIdler()
 	int rollerSetting;
 
 	digitalWrite(idlerEnablePin, ENABLE); // turn on (enable) the roller bearing motor
-	delay(1); // wait for 10 useconds
+	delay(1);							  // wait for 10 useconds
 
 	rollerSetting = MAXROLLERTRAVEL - bearingAbsPos[filamentSelection];
 	oldBearingPosition = bearingAbsPos[filamentSelection]; // update the idler bearing position
@@ -1061,7 +1076,6 @@ void unParkIdler()
 
 	digitalWrite(extruderEnablePin, ENABLE); // turn on (enable) the extruder stepper motor as well
 }
-
 
 /*****************************************************
  *
@@ -1078,9 +1092,9 @@ void quickParkIdler()
 	idlerturnamount(IDLERSTEPSIZE, CCW);
 
 	oldBearingPosition = oldBearingPosition + IDLERSTEPSIZE; // record the current position of the IDLER bearing
-	idlerStatus = QUICKPARKED; // use this new state to show the idler is pending the 'C0' command
+	idlerStatus = QUICKPARKED;								 // use this new state to show the idler is pending the 'C0' command
 
-    //FIXME : Turn off idler ?
+	//FIXME : Turn off idler ?
 	//digitalWrite(idlerEnablePin, DISABLE);    // turn off the roller bearing stepper motor  (nice to do, cuts down on CURRENT utilization)
 	digitalWrite(extruderEnablePin, DISABLE); // turn off the extruder stepper motor as well
 }
@@ -1096,8 +1110,8 @@ void quickUnParkIdler()
 	int rollerSetting;
 
 	rollerSetting = oldBearingPosition - IDLERSTEPSIZE; // go back IDLERSTEPSIZE units (hopefully re-enages the bearing
-	
-	idlerturnamount(IDLERSTEPSIZE, CW);					// restore old position
+
+	idlerturnamount(IDLERSTEPSIZE, CW); // restore old position
 
 	print_log(F("quickunparkidler(): oldBearingPosition"));
 	println_log(oldBearingPosition);
@@ -1106,7 +1120,6 @@ void quickUnParkIdler()
 
 	idlerStatus = ACTIVE; // mark the idler as active
 }
-
 
 /*****************************************************
  *
@@ -1136,7 +1149,7 @@ void specialParkIdler()
 	//* record the idler position  (get back to where we were)
 	//***********************************************************************************************
 	oldBearingPosition = oldBearingPosition + idlerSteps; // record the current position of the IDLER bearingT
-	idlerStatus = QUICKPARKED; // use this new state to show the idler is pending the 'C0' command
+	idlerStatus = QUICKPARKED;							  // use this new state to show the idler is pending the 'C0' command
 
 	//FIXME : stop the idler ????
 	// digitalWrite(idlerEnablePin, DISABLE);    // turn off the roller bearing stepper motor  (nice to do, cuts down on CURRENT utilization)
@@ -1208,13 +1221,17 @@ void toolChange(char selection)
 			idlerSelector(selection); // move the filament selector stepper motor to the right spot
 			colorSelector(selection); // move the color Selector stepper Motor to the right spot
 			filamentLoadToMK3();
-			quickParkIdler(); 
+			quickParkIdler();
 			repeatTCmdFlag = INACTIVE; // used to help the 'C' command to feed the filament again
-		}else{
+		}
+		else
+		{
 			println_log(F("toolChange:  filament already loaded to mk3 extruder"));
 			repeatTCmdFlag = ACTIVE; // used to help the 'C' command to not feed the filament again
 		}
-	}else{ 
+	}
+	else
+	{
 		// different filament position
 		repeatTCmdFlag = INACTIVE; // turn off the repeat Commmand Flag (used by 'C' Command)
 		if (isFilamentLoadedPinda())
@@ -1223,12 +1240,12 @@ void toolChange(char selection)
 			println_log(F("toolChange: Unloading filament"));
 
 			idlerSelector(currentExtruder); // point to the current extruder
-			unloadFilamentToFinda(); // have to unload the filament first
+			unloadFilamentToFinda();		// have to unload the filament first
 		}
 
-        // reset the color selector stepper motor (gets out of alignment)
+		// reset the color selector stepper motor (gets out of alignment)
 		if (trackToolChanges > TOOLSYNC)
-		{ 
+		{
 			println_log(F("toolChange: Synchronizing the Filament Selector Head"));
 			syncColorSelector();
 			//FIXME : add syncIdlerSelector here
@@ -1301,21 +1318,21 @@ loop:
 		startTime = millis();
 	}
 	// keep feeding the filament until the pinda sensor triggers
-	if (!isFilamentLoadedPinda()) 
+	if (!isFilamentLoadedPinda())
 		goto loop;
 loop1:
 	if (isFilamentLoadedtoExtruder())
-	{ 
+	{
 		// switch is active (this is not a good condition)
 		fixTheProblem("FILAMENT LOAD ERROR: Filament Switch in the MK3 is active (see the RED LED), it is either stuck open or there is debris");
 		goto loop1;
 	}
 
-    // go DIST_MMU_EXTRUDER mm
-	feedFilament(STEPSPERMM * DIST_MMU_EXTRUDER, STOP_AT_EXTRUDER); 
+	// go DIST_MMU_EXTRUDER mm
+	feedFilament(STEPSPERMM * DIST_MMU_EXTRUDER, STOP_AT_EXTRUDER);
 
 #ifdef FILAMENTSWITCH_BEFORE_EXTRUDER
-    // insert until the 2nd filament sensor
+	// insert until the 2nd filament sensor
 	filamentDistance = DIST_MMU_EXTRUDER;
 	startTime = millis();
 	flag = 0;
@@ -1326,7 +1343,7 @@ loop1:
 
 		currentTime = millis();
 		if ((currentTime - startTime) > TIMEOUT_LOAD_UNLOAD)
-		{ 
+		{
 			fixTheProblem("FILAMENT LOAD ERROR: Filament not detected by the MK3 filament sensor, check the bowden tube for clogging/binding");
 			startTime = millis(); // reset the start Time
 		}
@@ -1379,10 +1396,9 @@ bool filamentLoadWithBondTechGear()
 		currentExtruder = '0';
 	}
 
-
 	if (idlerStatus == QUICKPARKED)
-	{ 
-		specialUnParkIdler(); 
+	{
+		specialUnParkIdler();
 	}
 	if (idlerStatus == INACTIVE)
 	{
@@ -1392,11 +1408,11 @@ bool filamentLoadWithBondTechGear()
 	stepCount = 0;
 	digitalWrite(greenLED, HIGH); // turn on the green LED (for debug purposes)
 
-	// feed the filament from the MMU2 into the bondtech gear 
+	// feed the filament from the MMU2 into the bondtech gear
 	tSteps = STEPSPERMM * ((float)LOAD_DURATION / 1000.0) * LOAD_SPEED;			// compute the number of steps to take for the given load duration
 	delayFactor = (float(LOAD_DURATION * 1000.0) / tSteps) - INSTRUCTION_DELAY; // delayFactor algorithm
 
-	digitalWrite(extruderEnablePin, ENABLE); // turn on the extruder stepper motor 
+	digitalWrite(extruderEnablePin, ENABLE); // turn on the extruder stepper motor
 	digitalWrite(extruderDirPin, CCW);		 // set extruder stepper motor to push filament towards the mk3
 
 	for (i = 0; i < tSteps; i++)
@@ -1404,7 +1420,7 @@ bool filamentLoadWithBondTechGear()
 		digitalWrite(extruderStepPin, HIGH); // step the extruder stepper in the MMU2 unit
 		delayMicroseconds(PINHIGH);
 		digitalWrite(extruderStepPin, LOW);
-		delayMicroseconds(delayFactor); 
+		delayMicroseconds(delayFactor);
 		++stepCount;
 	}
 	digitalWrite(greenLED, LOW); // turn off the green LED (for debug purposes)
@@ -1413,12 +1429,11 @@ bool filamentLoadWithBondTechGear()
 	println_log(F("C Command: parking the idler"));
 #endif
 
-    // FIXME : specialParkIdler() or parkIdler() ???
+	// FIXME : specialParkIdler() or parkIdler() ???
 	specialParkIdler();
-	parkIdler(); 
+	parkIdler();
 
-
-#ifndef FILAMENTSWITCH_BEFORE_EXTRUDER
+#ifdef FILAMENTSWITCH_ON_EXTRUDER
 	//Wait for MMU code in Marlin to load the filament and activate the filament switch
 	delay(FILAMENT_TO_MK3_C0_WAIT_TIME);
 	if (isFilamentLoadedtoExtruder())

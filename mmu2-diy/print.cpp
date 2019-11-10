@@ -125,7 +125,7 @@ void println_log(char msg)
 void print_log(const __FlashStringHelper *msg)
 {
 #ifdef SERIAL_DEBUG
-    Serial.println(msg);
+    Serial.print(msg);
 #endif
 #ifdef SSD1306
     manage_screen();
