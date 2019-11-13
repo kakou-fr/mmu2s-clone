@@ -46,10 +46,8 @@
 
 //************************************************************************************
 //* this resets the selector stepper motor after the selected number of tool changes
-//* changed from 25 to 10 (10.10.18)
-//* chagned from 10 to 8 (10.14.18)
 //*************************************************************************************
-#define TOOLSYNC 20                         // number of tool change (T) commands before a selector resync is performed
+#define TOOLSYNC 5                         // number of tool change (T) commands before a selector resync is performed
 
 
 
@@ -70,10 +68,10 @@
 #define FILAMENT_TO_MK3_C0_WAIT_TIME 2000
 
 // Distance to restract the filament into the MMU 
-#define UNLOAD_LENGTH_BACK_COLORSELECTOR 25
+#define UNLOAD_LENGTH_BACK_COLORSELECTOR 30
 //
 int IDLEROFFSET[5] = {0,0,0,0,0};
-#define IDLERSTEPSIZE 23         // steps to each roller bearing
+#define IDLERSTEPSIZE 25         // steps to each roller bearing
 
 
 
@@ -158,9 +156,10 @@ int CSOFFSET[5] = {30,30,0,-15,-30};
 #endif
 
 #ifdef SKRMINI
+// https://github.com/bigtreetech/BIGTREETECH-SKR-MINI-V1.1/blob/master/hardware/SKR-mini-V1.1-PIN.pdf
 // added this pin as a debug pin (lights a green LED so I can see the 'C0' command in action
-//Y_MIN_PIN
-#define greenLED 26
+// Y_MIN_PIN
+#define greenLED PC1
 
 // modified code on 10.2.18 to accomodate RAMPS 1.6 board mapping
 //

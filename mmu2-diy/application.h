@@ -28,8 +28,6 @@ extern void csTurnAmount(int steps, int direction);
 extern void feedFilament(unsigned int steps, int stoptoextruder);
 extern void idlerturnamount(int steps, int dir);
 extern void syncColorSelector();
-extern void specialParkIdler();
-extern void specialUnParkIdler();
 
 class Application
 {

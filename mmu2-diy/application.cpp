@@ -94,7 +94,6 @@ void Application::setup()
 	while (!Serial1.available())
 	{
 
-		//delay(100);
 		println_log(F("Waiting for message from mk3"));
 		delay(1000);
 		++waitCount;
@@ -213,28 +212,18 @@ void Application::loop()
 			initColorSelector();
 			println_log(F("initIdlerPosition"));
 			initIdlerPosition();
-			println_log(F("feedFilament"));
-			feedFilament(STEPSPERMM * 100, IGNORE_STOP_AT_EXTRUDER);
-			println_log(F("Color 0"));
-			idlerSelector('0');
-			colorSelector('0');
-			delay(5000);
-			println_log(F("Color 1"));
-			idlerSelector('1');
-			colorSelector('1');
-			delay(5000);
-			println_log(F("Color 2"));
-			idlerSelector('2');
-			colorSelector('2');
-			delay(5000);
-			println_log(F("Color 3"));
-			idlerSelector('3');
-			colorSelector('3');
-			delay(5000);
-			println_log(F("Color 4"));
-			idlerSelector('4');
-			colorSelector('4');
-			delay(5000);
+			char colors[5] = {'0', '1', '2', '3', '4'};
+			for (int i = 0; i < 5; i++)
+			{
+				char c = colors[i];
+				print_log(F("Color "));
+				println_log(c);
+				idlerSelector(c);
+				colorSelector(c);
+				filamentLoadToMK3();
+				unloadFilamentToFinda();
+				delay(5000);
+			}
 		}
 		else if (kbString[0] == 'Z')
 		{
@@ -524,6 +513,10 @@ void fixTheProblem(String statement)
 	isFilamentLoadedPinda() ? print_log(F("ON    | ")) : print_log(F("OFF   | "));
 	isFilamentLoadedtoExtruder() ? println_log(F("ON")) : println_log(F("OFF"));
 	println_log(F(""));
+	//FIXME
+	// IF POSSIBLE : 
+	// SYNC COLORSELECTOR
+	// SYNC IDLER
 	parkIdler();								   // park the idler stepper motor
 	digitalWrite(colorSelectorEnablePin, DISABLE); // turn off the selector stepper motor
 
@@ -734,7 +727,7 @@ void syncColorSelector()
 
 	csTurnAmount(moveSteps, CW);						   // move all the way to the right
 	csTurnAmount(MAXSELECTOR_STEPS + CS_RIGHT_FORCE, CCW); // move all the way to the left
-														   //FIXME : turn of motor ???
+														   //FIXME : turn off motor ???
 														   //digitalWrite(colorSelectorEnablePin, DISABLE); // turn off the stepper motor
 }
 
@@ -1121,65 +1114,6 @@ void quickUnParkIdler()
 	idlerStatus = ACTIVE; // mark the idler as active
 }
 
-/*****************************************************
- *
- * called by 'C' command to park the idler
- *
- * FIXME: needed ?
- *****************************************************/
-void specialParkIdler()
-{
-	int idlerSteps;
-
-	digitalWrite(idlerEnablePin, ENABLE); // turn on the idler stepper motor
-	delay(1);
-
-	//*************************************************************************************************
-	//*  this is a new approach to moving the idler just a little bit (off the filament)
-	//*  in preparation for the 'C' Command
-	//*************************************************************************************************
-	if (IDLERSTEPSIZE % 2)
-		idlerSteps = IDLERSTEPSIZE / 2 + 1; // odd number processing, need to round up
-	else
-		idlerSteps = IDLERSTEPSIZE / 2;
-
-	idlerturnamount(idlerSteps, CCW);
-
-	//************************************************************************************************
-	//* record the idler position  (get back to where we were)
-	//***********************************************************************************************
-	oldBearingPosition = oldBearingPosition + idlerSteps; // record the current position of the IDLER bearingT
-	idlerStatus = QUICKPARKED;							  // use this new state to show the idler is pending the 'C0' command
-
-	//FIXME : stop the idler ????
-	// digitalWrite(idlerEnablePin, DISABLE);    // turn off the roller bearing stepper motor  (nice to do, cuts down on CURRENT utilization)
-}
-
-/*****************************************************
- *
- * this routine is called by the 'C' command to re-engage the idler bearing
- *
- * FIXME: needed ?
- *****************************************************/
-void specialUnParkIdler()
-{
-	int idlerSteps;
-
-	// re-enage the idler bearing that was only moved 1 position (for quicker re-engagement)
-	//
-	if (IDLERSTEPSIZE % 2)
-		idlerSteps = IDLERSTEPSIZE / 2 + 1; // odd number processing, need to round up
-	else
-		idlerSteps = IDLERSTEPSIZE / 2;
-
-	idlerturnamount(idlerSteps, CW); // restore old position
-
-	// MIGHT BE A BAD IDEA
-	oldBearingPosition = oldBearingPosition - idlerSteps; // keep track of the idler position
-
-	idlerStatus = ACTIVE; // mark the idler as active
-}
-
 /***************************************************************************************************************
  ***************************************************************************************************************
  * 
@@ -1398,7 +1332,7 @@ bool filamentLoadWithBondTechGear()
 
 	if (idlerStatus == QUICKPARKED)
 	{
-		specialUnParkIdler();
+		quickUnParkIdler();
 	}
 	if (idlerStatus == INACTIVE)
 	{
@@ -1429,8 +1363,6 @@ bool filamentLoadWithBondTechGear()
 	println_log(F("C Command: parking the idler"));
 #endif
 
-	// FIXME : specialParkIdler() or parkIdler() ???
-	specialParkIdler();
 	parkIdler();
 
 #ifdef FILAMENTSWITCH_ON_EXTRUDER
