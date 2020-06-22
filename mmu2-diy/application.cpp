@@ -78,22 +78,23 @@ void Application::setup()
 	println_log(MMU2_VERSION);
 	delay(200);
 
-	Serial1.begin(115200); // Hardware serial interface (mmu<->printer board)
+	SerialPRINTER.begin(115200); // Hardware serial interface (mmu<->printer board)
 	delay(100);
-
 	println_log(F("Sending START command to mk3 controller board"));
 	// ***************************************
 	// THIS NEXT COMMAND IS CRITICAL ... IT TELLS THE MK3 controller that an MMU is present
 	// ***************************************
-	Serial1.print(F("start\n")); // attempt to tell the mk3 that the mmu is present
+	SerialPRINTER.print(F("start\n")); // attempt to tell the mk3 that the mmu is present
 
 	//***************************
 	//  check the serial interface to see if it is active
 	//***************************
 	waitCount = 0;
-	while (!Serial1.available())
+	while (!SerialPRINTER.available())
 	{
-
+		println_log(F("Sending START command to mk3 controller board"));
+    	println_log(F("Starting new beta v 1.0"));
+		SerialPRINTER.print(F("start\n")); // attempt to tell the mk3 that the mmu is present
 		println_log(F("Waiting for message from mk3"));
 		delay(1000);
 		++waitCount;
@@ -335,10 +336,10 @@ void checkSerialInterface()
 	int index;
 
 	index = 0;
-	if ((cnt = Serial1.available()) > 0)
+	if ((cnt = SerialPRINTER.available()) > 0)
 	{
 
-		inputLine = Serial1.readString(); // fetch the command from the mmu2 serial input interface
+		inputLine = SerialPRINTER.readString(); // fetch the command from the mmu2 serial input interface
 
 		if (inputLine[0] != 'P')
 		{
@@ -373,12 +374,12 @@ void checkSerialInterface()
 				println_log(F("T: Invalid filament Selection"));
 			}
 
-			Serial1.print(F("ok\n")); // send command acknowledge back to mk3 controller
+			SerialPRINTER.print(F("ok\n")); // send command acknowledge back to mk3 controller
 			break;
 		case 'C':
 			// move filament from selector ALL the way to printhead
 			if (filamentLoadWithBondTechGear())
-				Serial1.print(F("ok\n"));
+				SerialPRINTER.print(F("ok\n"));
 			break;
 
 		case 'U':
@@ -398,13 +399,13 @@ void checkSerialInterface()
 				parkIdler();
 				println_log(F("U: Sending Filament Unload Acknowledge to MK3"));
 				delay(200);
-				Serial1.print(F("ok\n"));
+				SerialPRINTER.print(F("ok\n"));
 			}
 			else
 			{
 				println_log(F("U: Invalid filament Unload Requested"));
 				delay(200);
-				Serial1.print(F("ok\n"));
+				SerialPRINTER.print(F("ok\n"));
 			}
 			break;
 		case 'L':
@@ -431,7 +432,7 @@ void checkSerialInterface()
 				parkIdler(); // turn off the idler roller
 				println_log(F("L: Sending Filament Load Acknowledge to MK3"));
 				delay(200);
-				Serial1.print(F("ok\n"));
+				SerialPRINTER.print(F("ok\n"));
 			}
 			else
 			{
@@ -445,18 +446,18 @@ void checkSerialInterface()
 			{
 			case '0':
 				println_log(F("S: Sending back OK to MK3"));
-				Serial1.print(F("ok\n"));
+				SerialPRINTER.print(F("ok\n"));
 				break;
 			case '1':
 				println_log(F("S: FW Version Request"));
-				Serial1.print(FW_VERSION);
-				Serial1.print(F("ok\n"));
+				SerialPRINTER.print(FW_VERSION);
+				SerialPRINTER.print(F("ok\n"));
 				break;
 			case '2':
 				println_log(F("S: Build Number Request"));
 				println_log(F("Initial Communication with MK3 Controller: Successful"));
-				Serial1.print(FW_BUILDNR);
-				Serial1.print(F("ok\n"));
+				SerialPRINTER.print(FW_BUILDNR);
+				SerialPRINTER.print(F("ok\n"));
 				break;
 			default:
 				println_log(F("S: Unable to process S Command"));
@@ -467,24 +468,24 @@ void checkSerialInterface()
 			// check FINDA status
 			if (!isFilamentLoadedPinda())
 			{
-				Serial1.print(F("0"));
+				SerialPRINTER.print(F("0"));
 			}
 			else
 			{
-				Serial1.print(F("1"));
+				SerialPRINTER.print(F("1"));
 			}
-			Serial1.print(F("ok\n"));
+			SerialPRINTER.print(F("ok\n"));
 			break;
 		case 'F':
 			// 'F' command is acknowledged but no processing goes on at the moment
 			// will be useful for flexible material down the road
 			println_log(F("Filament Type Selected: "));
 			println_log(c2);
-			Serial1.print(F("ok\n")); // send back OK to the mk3
+			SerialPRINTER.print(F("ok\n")); // send back OK to the mk3
 			break;
 		default:
 			print_log(F("ERROR: unrecognized command from the MK3 controller"));
-			Serial1.print(F("ok\n"));
+			SerialPRINTER.print(F("ok\n"));
 		} // end of switch statement
 
 	} // end of cnt > 0 check
