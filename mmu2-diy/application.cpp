@@ -901,7 +901,7 @@ int isFilamentLoadedPinda()
 {
 	int findaStatus;
 	findaStatus = digitalRead(findaPin);
-	return (findaStatus);
+	return (findaStatus == PindaON);
 }
 
 /*****************************************************
