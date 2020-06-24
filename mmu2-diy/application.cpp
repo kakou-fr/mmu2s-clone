@@ -173,7 +173,12 @@ void Application::loop()
 		println_log(F("Key was hit "));
 
 		kbString = ReadSerialStrUntilNewLine();
-
+		// ignore protenface message
+		if (kbString[0] == ':' || kbString[0] == 'M')
+			return;
+		print_log("Message received : '");
+		println_log(kbString);
+		print_log("'");
 		if (kbString[0] == 'C')
 		{
 			println_log(F("Processing 'C' Command"));
