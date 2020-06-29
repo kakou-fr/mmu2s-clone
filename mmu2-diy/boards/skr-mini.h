@@ -7,10 +7,12 @@
 //
 
 
+#ifdef MMU2S
 //PIN X
 #define colorSelectorStepPin PC6
 #define colorSelectorDirPin  PC7 //color selector stepper motor (driven by trapezoidal screw)
 #define colorSelectorEnablePin PB15
+#endif
 
 // PIN Y
 #define idlerStepPin PB13
