@@ -64,6 +64,10 @@ boolean newData = false;
 int idlerStatus = INACTIVE;
 int colorSelectorStatus = INACTIVE;
 
+#ifdef MMU2_1S
+	int findaStatus = 0;
+#endif
+
 /*****************************************************
  *
  * Init the MMU, pin, Serial, ...
@@ -872,9 +876,14 @@ int isFilamentLoadedPinda()
  *****************************************************/
 bool isFilamentLoadedtoExtruder()
 {
+#ifdef MMU2S
 	int fStatus;
 	fStatus = digitalRead(filamentSwitch);
 	return (fStatus == filamentSwitchON);
+#endif
+#ifdef MMU2_1S
+	return findaStatus;
+#endif
 }
 
 /***************************************************************************************************************
@@ -989,6 +998,7 @@ loop:
 #ifdef MMU2_1S
 	digitalWrite(extruderDirPin, CW);
 	feedFilament(STEPSPERMM * DIST_MMU_EXTRUDER, IGNORE_STOP_AT_EXTRUDER);
+	findaStatus = 0;
 #endif
 }
 
@@ -1219,6 +1229,7 @@ void filamentLoadToMK3()
 
 	startTime = millis();
 
+#ifdef MMU2S
 loop:
 	feedFilament(STEPSPERMM, IGNORE_STOP_AT_EXTRUDER); // feed 1 mm of filament into the bowden tube
 
@@ -1234,6 +1245,11 @@ loop:
 	// keep feeding the filament until the pinda sensor triggers
 	if (!isFilamentLoadedPinda())
 		goto loop;
+#endif
+#ifdef MMU2_1S
+	findaStatus = 1;
+#endif
+
 loop1:
 	if (isFilamentLoadedtoExtruder())
 	{
@@ -1244,6 +1260,7 @@ loop1:
 
 	// go DIST_MMU_EXTRUDER mm
 	feedFilament(STEPSPERMM * DIST_MMU_EXTRUDER, STOP_AT_EXTRUDER);
+
 
 #ifdef FILAMENTSWITCH_BEFORE_EXTRUDER
 	// insert until the 2nd filament sensor
