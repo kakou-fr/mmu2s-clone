@@ -1206,8 +1206,6 @@ void filamentLoadToMK3()
 	int fStatus;
 	int filamentDistance;
 #endif
-	int startTime, currentTime;
-
 	if ((currentExtruder < '0') || (currentExtruder > '4'))
 	{
 		println_log(F("filamentLoadToMK3(): fixing current extruder variable"));
@@ -1223,13 +1221,15 @@ void filamentLoadToMK3()
 #ifdef MMU2S
 	deActivateColorSelector();
 #endif
+
 	digitalWrite(extruderEnablePin, ENABLE); // turn on the extruder stepper motor (10.14.18)
 	digitalWrite(extruderDirPin, CCW);		 // set extruder stepper motor to push filament towards the mk3
 	delay(1);								 // wait 1 millisecond
 
-	startTime = millis();
-
 #ifdef MMU2S
+	int startTime, currentTime;
+	startTime = millis();
+	
 loop:
 	feedFilament(STEPSPERMM, IGNORE_STOP_AT_EXTRUDER); // feed 1 mm of filament into the bowden tube
 
