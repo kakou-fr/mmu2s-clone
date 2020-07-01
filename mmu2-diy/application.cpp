@@ -1026,6 +1026,10 @@ void unloadFilamentToFinda()
 	digitalWrite(extruderDirPin, CW);		 // set the direction of the MMU2 extruder motor
 	delay(1);
 
+#ifdef FILAMENTSWITCH_BEFORE_EXTRUDER
+	feedFilament(STEPSPERMM * 2* DIST_EXTRUDER_BTGEAR, STOP_AT_EXTRUDER);
+	feedFilament(STEPSPERMM * 10, IGNORE_STOP_AT_EXTRUDER);
+#endif
 	startTime = millis();
 	startTime1 = millis();
 
