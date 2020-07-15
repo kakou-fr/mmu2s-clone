@@ -864,9 +864,14 @@ void feedFilament(unsigned int steps, int stoptoextruder)
  *****************************************************/
 int isFilamentLoadedPinda()
 {
+#ifdef MMU2S
 	int findaStatus;
 	findaStatus = digitalRead(findaPin);
 	return (findaStatus == PindaON);
+#endif
+#ifdef MMU2_1S
+	return findaStatus;
+#endif
 }
 
 /*****************************************************
@@ -876,14 +881,9 @@ int isFilamentLoadedPinda()
  *****************************************************/
 bool isFilamentLoadedtoExtruder()
 {
-#ifdef MMU2S
 	int fStatus;
 	fStatus = digitalRead(filamentSwitch);
 	return (fStatus == filamentSwitchON);
-#endif
-#ifdef MMU2_1S
-	return findaStatus;
-#endif
 }
 
 /***************************************************************************************************************
