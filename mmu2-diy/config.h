@@ -112,8 +112,9 @@ int CSOFFSET[5] = {30,30,0,-15,-30};
 //  BOARD
 //*************************************************************************************************
 // select the board used for the MMU
-#include "boards/skr-mini.h"
+// #include "boards/skr-mini.h"
 //#include "boards/gt2560.h"
+#include "boards/melzi.h"
 
 
 #endif
