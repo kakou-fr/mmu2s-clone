@@ -119,7 +119,7 @@ continue_processing:
 
 	pinMode(findaPin, INPUT);					// MMU pinda Filament sensor
 	pinMode(filamentSwitch, INPUT);				// extruder Filament sensor
-	pinMode(colorSelectorEnstop, INPUT_PULLUP); // enstop switch sensor
+
 
 	pinMode(extruderEnablePin, OUTPUT);
 	pinMode(extruderDirPin, OUTPUT);
@@ -129,6 +129,7 @@ continue_processing:
 	pinMode(colorSelectorEnablePin, OUTPUT);
 	pinMode(colorSelectorDirPin, OUTPUT);
 	pinMode(colorSelectorStepPin, OUTPUT);
+	pinMode(colorSelectorEnstop, INPUT_PULLUP); // enstop switch sensor
 #endif
 
 	pinMode(greenLED, OUTPUT); // green LED used for debug purposes
@@ -227,9 +228,11 @@ void Application::loop()
 			print_log(F("FINDA status: "));
 			int fstatus = digitalRead(findaPin);
 			println_log(fstatus);
+			#ifdef MMU2S
 			print_log(F("colorSelectorEnstop status: "));
 			int cdenstatus = digitalRead(colorSelectorEnstop);
 			println_log(cdenstatus);
+			#endif
 			print_log(F("Extruder endstop status: "));
 			fstatus = digitalRead(filamentSwitch);
 			Serial.println(fstatus);
