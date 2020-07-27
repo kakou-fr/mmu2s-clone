@@ -14,6 +14,17 @@
 #include "config.h"
 #include "application.h"
 
+#ifdef USE_TMC
+#include <TMCStepper.h>
+
+#define DRIVER_ADDRESS 0b00 // TMC2209 Driver address according to MS1 and MS2
+TMC2209Stepper idlerDriver(idlerSerialRXPin, idlerSerialTXPin, idlerRSense, DRIVER_ADDRESS);
+TMC2209Stepper extruderDriver(extruderSerialRXPin, extruderSerialTXPin, extruderRSense, DRIVER_ADDRESS);
+#ifdef MMU2S
+TMC2209Stepper colorSelectorDriver(colorSelectorSerialRXPin, colorSelectorSerialTXPin, colorSelectorRSense, DRIVER_ADDRESS);
+#endif
+#endif
+
 /*************** */
 char cstr[16];
 #include "print.h"
@@ -136,11 +147,61 @@ continue_processing:
 
 	println_log(F("finished setting up input and output pins"));
 
+#ifdef USE_TMC
+	digitalWrite(idlerEnablePin, DISABLE);
+	idlerDriver.beginSerial(TMC_BAUD_RATE);
+
+	bool stealth = false;
+    TMC2208_n::GCONF_t gconf{0};
+    gconf.pdn_disable = true; // Use UART
+    gconf.mstep_reg_select = true; // Select microsteps with UART
+    gconf.i_scale_analog = false;
+    gconf.en_spreadcycle = !stealth;
+    idlerDriver.GCONF(gconf.sr);
+
+	idlerDriver.toff(5);
+	 // Enables driver in software
+	idlerDriver.rms_current(idlerRMSCurrent, HOLD_MULTIPLIER);
+	idlerDriver.microsteps(idlerMicrosteps);
+	idlerDriver.iholddelay(10);
+	idlerDriver.TPOWERDOWN(128);  // ~2s until driver lowers to hold current
+
+	TMC2208_n::PWMCONF_t pwmconf{0};
+    pwmconf.pwm_lim = 12;
+    pwmconf.pwm_reg = 8;
+    pwmconf.pwm_autograd = true;
+    pwmconf.pwm_autoscale = true;
+    pwmconf.pwm_freq = 0b01;
+    pwmconf.pwm_grad = 14;
+    pwmconf.pwm_ofs = 36;
+    idlerDriver.PWMCONF(pwmconf.sr);
+	idlerDriver.GSTAT(0b111); // Clear
+
+	digitalWrite(extruderEnablePin, DISABLE);
+	extruderDriver.beginSerial(TMC_BAUD_RATE);
+
+    extruderDriver.GCONF(gconf.sr);
+
+	extruderDriver.toff(5); // Enables driver in software
+	extruderDriver.rms_current(extruderRMSCurrent, HOLD_MULTIPLIER);
+	extruderDriver.microsteps(extruderMicrosteps);
+	extruderDriver.iholddelay(10);
+	extruderDriver.TPOWERDOWN(128);  // ~2s until driver lowers to hold current
+    extruderDriver.PWMCONF(pwmconf.sr);
+	extruderDriver.GSTAT(0b111); // Clear
+
+	#ifdef MMU2S
+		digitalWrite(colorSelectorEnablePin, ENABLE);
+		colorSelectorDriver.beginSerial(TMC_BAUD_RATE);
+	#endif
+	
+#elif
 	// Turn OFF all three stepper motors (heat protection)
 	digitalWrite(idlerEnablePin, DISABLE);		   // DISABLE the roller bearing motor (motor #1)
 	digitalWrite(extruderEnablePin, DISABLE);	  //  DISABLE the extruder motor  (motor #2)
-#ifdef MMU2S
-	digitalWrite(colorSelectorEnablePin, DISABLE); // DISABLE the color selector motor  (motor #3)
+	#ifdef MMU2S
+		digitalWrite(colorSelectorEnablePin, DISABLE); // DISABLE the color selector motor  (motor #3)
+	#endif
 #endif
 
 	// Initialize stepper
@@ -798,6 +859,8 @@ void idlerSelector(char filament)
 		idlerturnamount(newSetting, CCW); // turn idler to appropriate position
 	oldBearingPosition = newBearingPosition;
 }
+
+
 
 /*****************************************************
  *
