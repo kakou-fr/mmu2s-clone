@@ -44,3 +44,4 @@
 
 
 #define SerialPRINTER Serial1
+#define ConsoleSerial Serial

@@ -241,7 +241,7 @@ void Application::loop()
 #ifdef SERIAL_DEBUG
 	// check for keyboard input
 
-	if (Serial.available())
+	if (ConsoleSerial.available())
 	{
 		println_log(F("Key was hit "));
 
@@ -296,14 +296,14 @@ void Application::loop()
 			#endif
 			print_log(F("Extruder endstop status: "));
 			fstatus = digitalRead(filamentSwitch);
-			Serial.println(fstatus);
+			ConsoleSerial.println(fstatus);
 			println_log(F("PINDA | EXTRUDER"));
 			while (true)
 			{
 				isFilamentLoadedPinda() ? print_log(F("ON    | ")) : print_log(F("OFF   | "));
 				isFilamentLoadedtoExtruder() ? println_log(F("ON")) : println_log(F("OFF"));
 				delay(200);
-				if (Serial.available())
+				if (ConsoleSerial.available())
 				{
 					ReadSerialStrUntilNewLine();
 					break;
@@ -335,9 +335,9 @@ String ReadSerialStrUntilNewLine()
 	char c = -1;
 	while ((c != '\n') && (c != '\r'))
 	{
-		if (Serial.available())
+		if (ConsoleSerial.available())
 		{
-			c = char(Serial.read());
+			c = char(ConsoleSerial.read());
 			if (c != -1)
 			{
 				str += c;
@@ -548,11 +548,11 @@ void fixTheProblem(String statement)
 #endif
 
 #ifdef SERIAL_DEBUG
-	while (!Serial.available())
+	while (!ConsoleSerial.available())
 	{
 		//  wait until key is entered to proceed  (this is to allow for operator intervention)
 	}
-	Serial.readString(); // clear the keyboard buffer
+	ConsoleSerial.readString(); // clear the keyboard buffer
 #endif
 
 	unParkIdler();								  // put the idler stepper motor back to its' original position

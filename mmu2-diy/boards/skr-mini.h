@@ -53,3 +53,4 @@
 SoftwareSerial Serials(PB7,PC13); // RX, TX 
 #define SerialPRINTER Serials
 */
+#define ConsoleSerial Serial
