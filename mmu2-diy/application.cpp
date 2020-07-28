@@ -87,6 +87,14 @@ int colorSelectorStatus = INACTIVE;
 void Application::setup()
 {
 	int waitCount;
+
+	#if defined(USB_CONNECT_PIN) && defined(USB_CONNECT_INVERTING)
+		pinMode(USB_CONNECT_PIN, OUTPUT);
+		digitalWrite(USB_CONNECT_PIN, (!USB_CONNECT_INVERTING) ? HIGH : LOW);  // USB clear connection
+		delay(1000);                                         // Give OS time to notice
+		digitalWrite(USB_CONNECT_PIN, USB_CONNECT_INVERTING ? HIGH : LOW);
+	#endif
+
 	/************/
 	ioprint.setup();
 	/************/
@@ -241,7 +249,7 @@ void Application::loop()
 #ifdef SERIAL_DEBUG
 	// check for keyboard input
 
-	if (ConsoleSerial.available())
+	if (Serial.available())
 	{
 		println_log(F("Key was hit "));
 
@@ -296,14 +304,14 @@ void Application::loop()
 			#endif
 			print_log(F("Extruder endstop status: "));
 			fstatus = digitalRead(filamentSwitch);
-			ConsoleSerial.println(fstatus);
+			Serial.println(fstatus);
 			println_log(F("PINDA | EXTRUDER"));
 			while (true)
 			{
 				isFilamentLoadedPinda() ? print_log(F("ON    | ")) : print_log(F("OFF   | "));
 				isFilamentLoadedtoExtruder() ? println_log(F("ON")) : println_log(F("OFF"));
 				delay(200);
-				if (ConsoleSerial.available())
+				if (Serial.available())
 				{
 					ReadSerialStrUntilNewLine();
 					break;
@@ -335,9 +343,9 @@ String ReadSerialStrUntilNewLine()
 	char c = -1;
 	while ((c != '\n') && (c != '\r'))
 	{
-		if (ConsoleSerial.available())
+		if (Serial.available())
 		{
-			c = char(ConsoleSerial.read());
+			c = char(Serial.read());
 			if (c != -1)
 			{
 				str += c;
@@ -548,11 +556,11 @@ void fixTheProblem(String statement)
 #endif
 
 #ifdef SERIAL_DEBUG
-	while (!ConsoleSerial.available())
+	while (!Serial.available())
 	{
 		//  wait until key is entered to proceed  (this is to allow for operator intervention)
 	}
-	ConsoleSerial.readString(); // clear the keyboard buffer
+	Serial.readString(); // clear the keyboard buffer
 #endif
 
 	unParkIdler();								  // put the idler stepper motor back to its' original position

@@ -106,5 +106,6 @@
 SoftwareSerial Serials(PB7,PC13); // RX, TX 
 #define SerialPRINTER Serials
 */
-#define ConsoleSerial Serial1
-extern HardwareSerial ConsoleSerial;
+
+#define USB_CONNECT_PIN                     PC13
+#define USB_CONNECT_INVERTING false
