@@ -14,6 +14,17 @@
 #include "config.h"
 #include "application.h"
 
+#ifdef USE_TMC
+#include <TMCStepper.h>
+
+#define DRIVER_ADDRESS 0b00 // TMC2209 Driver address according to MS1 and MS2
+TMC2209Stepper idlerDriver(idlerSerialRXPin, idlerSerialTXPin, idlerRSense, DRIVER_ADDRESS);
+TMC2209Stepper extruderDriver(extruderSerialRXPin, extruderSerialTXPin, extruderRSense, DRIVER_ADDRESS);
+#ifdef MMU2S
+TMC2209Stepper colorSelectorDriver(colorSelectorSerialRXPin, colorSelectorSerialTXPin, colorSelectorRSense, DRIVER_ADDRESS);
+#endif
+#endif
+
 /*************** */
 char cstr[16];
 #include "print.h"
@@ -76,6 +87,14 @@ int colorSelectorStatus = INACTIVE;
 void Application::setup()
 {
 	int waitCount;
+
+	#if defined(USB_CONNECT_PIN) && defined(USB_CONNECT_INVERTING)
+		pinMode(USB_CONNECT_PIN, OUTPUT);
+		digitalWrite(USB_CONNECT_PIN, (!USB_CONNECT_INVERTING) ? HIGH : LOW);  // USB clear connection
+		delay(1000);                                         // Give OS time to notice
+		digitalWrite(USB_CONNECT_PIN, USB_CONNECT_INVERTING ? HIGH : LOW);
+	#endif
+
 	/************/
 	ioprint.setup();
 	/************/
@@ -119,7 +138,7 @@ continue_processing:
 
 	pinMode(findaPin, INPUT);					// MMU pinda Filament sensor
 	pinMode(filamentSwitch, INPUT);				// extruder Filament sensor
-	pinMode(colorSelectorEnstop, INPUT_PULLUP); // enstop switch sensor
+
 
 	pinMode(extruderEnablePin, OUTPUT);
 	pinMode(extruderDirPin, OUTPUT);
@@ -129,17 +148,68 @@ continue_processing:
 	pinMode(colorSelectorEnablePin, OUTPUT);
 	pinMode(colorSelectorDirPin, OUTPUT);
 	pinMode(colorSelectorStepPin, OUTPUT);
+	pinMode(colorSelectorEnstop, INPUT_PULLUP); // enstop switch sensor
 #endif
 
 	pinMode(greenLED, OUTPUT); // green LED used for debug purposes
 
 	println_log(F("finished setting up input and output pins"));
 
+#ifdef USE_TMC
+	digitalWrite(idlerEnablePin, DISABLE);
+	idlerDriver.beginSerial(TMC_BAUD_RATE);
+
+	bool stealth = false;
+    TMC2208_n::GCONF_t gconf{0};
+    gconf.pdn_disable = true; // Use UART
+    gconf.mstep_reg_select = true; // Select microsteps with UART
+    gconf.i_scale_analog = false;
+    gconf.en_spreadcycle = !stealth;
+    idlerDriver.GCONF(gconf.sr);
+
+	idlerDriver.toff(5);
+	 // Enables driver in software
+	idlerDriver.rms_current(idlerRMSCurrent, HOLD_MULTIPLIER);
+	idlerDriver.microsteps(idlerMicrosteps);
+	idlerDriver.iholddelay(10);
+	idlerDriver.TPOWERDOWN(128);  // ~2s until driver lowers to hold current
+
+	TMC2208_n::PWMCONF_t pwmconf{0};
+    pwmconf.pwm_lim = 12;
+    pwmconf.pwm_reg = 8;
+    pwmconf.pwm_autograd = true;
+    pwmconf.pwm_autoscale = true;
+    pwmconf.pwm_freq = 0b01;
+    pwmconf.pwm_grad = 14;
+    pwmconf.pwm_ofs = 36;
+    idlerDriver.PWMCONF(pwmconf.sr);
+	idlerDriver.GSTAT(0b111); // Clear
+
+	digitalWrite(extruderEnablePin, DISABLE);
+	extruderDriver.beginSerial(TMC_BAUD_RATE);
+
+    extruderDriver.GCONF(gconf.sr);
+
+	extruderDriver.toff(5); // Enables driver in software
+	extruderDriver.rms_current(extruderRMSCurrent, HOLD_MULTIPLIER);
+	extruderDriver.microsteps(extruderMicrosteps);
+	extruderDriver.iholddelay(10);
+	extruderDriver.TPOWERDOWN(128);  // ~2s until driver lowers to hold current
+    extruderDriver.PWMCONF(pwmconf.sr);
+	extruderDriver.GSTAT(0b111); // Clear
+
+	#ifdef MMU2S
+		digitalWrite(colorSelectorEnablePin, ENABLE);
+		colorSelectorDriver.beginSerial(TMC_BAUD_RATE);
+	#endif
+	
+#elif
 	// Turn OFF all three stepper motors (heat protection)
 	digitalWrite(idlerEnablePin, DISABLE);		   // DISABLE the roller bearing motor (motor #1)
 	digitalWrite(extruderEnablePin, DISABLE);	  //  DISABLE the extruder motor  (motor #2)
-#ifdef MMU2S
-	digitalWrite(colorSelectorEnablePin, DISABLE); // DISABLE the color selector motor  (motor #3)
+	#ifdef MMU2S
+		digitalWrite(colorSelectorEnablePin, DISABLE); // DISABLE the color selector motor  (motor #3)
+	#endif
 #endif
 
 	// Initialize stepper
@@ -227,9 +297,11 @@ void Application::loop()
 			print_log(F("FINDA status: "));
 			int fstatus = digitalRead(findaPin);
 			println_log(fstatus);
+			#ifdef MMU2S
 			print_log(F("colorSelectorEnstop status: "));
 			int cdenstatus = digitalRead(colorSelectorEnstop);
 			println_log(cdenstatus);
+			#endif
 			print_log(F("Extruder endstop status: "));
 			fstatus = digitalRead(filamentSwitch);
 			Serial.println(fstatus);
@@ -796,6 +868,8 @@ void idlerSelector(char filament)
 	oldBearingPosition = newBearingPosition;
 }
 
+
+
 /*****************************************************
  *
  * turn the idler stepper motor
@@ -952,6 +1026,10 @@ void unloadFilamentToFinda()
 	digitalWrite(extruderDirPin, CW);		 // set the direction of the MMU2 extruder motor
 	delay(1);
 
+#ifdef FILAMENTSWITCH_BEFORE_EXTRUDER
+	feedFilament(STEPSPERMM * 2* DIST_EXTRUDER_BTGEAR, STOP_AT_EXTRUDER);
+	feedFilament(STEPSPERMM * 10, IGNORE_STOP_AT_EXTRUDER);
+#endif
 	startTime = millis();
 	startTime1 = millis();
 

@@ -3,15 +3,6 @@
 
 #include <Arduino.h>
 
-// SSD1306 SCREEN
-//#define SSD1306
-#ifdef SSD1306
-#include <SPI.h>
-#include <Wire.h>
-#include <Adafruit_GFX.h>
-#include <Adafruit_SSD1306.h>
-#endif
-
 /*************************/
 // http://www.geeetech.com/wiki/images/9/90/GT2560_sch.pdf
 //

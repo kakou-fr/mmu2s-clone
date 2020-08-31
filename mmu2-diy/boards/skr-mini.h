@@ -33,7 +33,9 @@
 #define findaPin  PC2
 
 // Z_MIN_PIN
+#ifdef MMU2S
 #define colorSelectorEnstop PC0
+#endif
 
 // Z_MAX_PIN
 #define filamentSwitch PC3
@@ -51,3 +53,4 @@
 SoftwareSerial Serials(PB7,PC13); // RX, TX 
 #define SerialPRINTER Serials
 */
+#define ConsoleSerial Serial

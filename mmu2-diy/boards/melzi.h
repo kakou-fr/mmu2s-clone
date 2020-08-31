@@ -1,39 +1,32 @@
 // added this pin as a debug pin (lights a green LED so I can see the 'C0' command in action
-//Y_MIN_PIN
-#define greenLED 26
+// Y Stop
+#define greenLED 19
 
-// modified code on 10.2.18 to accomodate RAMPS 1.6 board mapping
-//
+// Z Motor Pins
+#define idlerDirPin 2
+#define idlerStepPin 3
+#define idlerEnablePin 26
 
-// PIN Y
-#define idlerDirPin  33
-#define idlerStepPin 31
-#define idlerEnablePin 29
+// Extruder Motor Pins
+#define extruderDirPin 0
+#define extruderStepPin 1
+#define extruderEnablePin 14
 
+// Note: Creality Melzi does not have indepedent X or Y enable pins, shared with extruder
+#ifdef MMU2S
+#define colorSelectorDirPin   //color selector stepper motor (driven by trapezoidal screw)
+#define colorSelectorStepPin 
+#define colorSelectorEnablePin 
+#endif
 
-// PIN Z
-#define extruderDirPin  39 //  pin 48 for extruder motor direction pin
-#define extruderStepPin  37 //  pin 48 for extruder motor stepper motor pin
-#define extruderEnablePin 35 //  pin A8 for extruder motor rst/sleep motor pin
+// X stop
+#define findaPin  18
 
-//PIN X
-#define colorSelectorDirPin  23 //color selector stepper motor (driven by trapezoidal screw)
-#define colorSelectorStepPin 25
-#define colorSelectorEnablePin 27
+// Z Stop
+#define colorSelectorEnstop 20
 
-
-//BROWN = +5V
-//BLUE = GND
-//BLACK = SIGNAL
-//SERVo PIN GT2560
-#define findaPin  11
-
-// Z_MIN_PIN
-#define colorSelectorEnstop 30
-
-// Z_MAX_PIN
-#define filamentSwitch 32
-
+// B-MOT (TEMP_BED_PIN)
+#define filamentSwitch 6
 
 // https://www.lesimprimantes3d.fr/forum/uploads/monthly_2018_10/Epson_29102018163351.jpg.9b3dec82b6691ac5af5c7ea2451e41b4.jpg
 //Hardware Serial1 : 19 (RX) and 18 (TX)
@@ -50,7 +43,5 @@
 //SoftwareSerial Serial1(10,11); // RX, TX (communicates with the MK3 controller boards
 
 
-//SKR
-// P.015 and P.16 (UART1)
 #define SerialPRINTER Serial1
 #define ConsoleSerial Serial
