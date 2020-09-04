@@ -203,7 +203,7 @@ continue_processing:
 		colorSelectorDriver.beginSerial(TMC_BAUD_RATE);
 	#endif
 	
-#elif
+#else
 	// Turn OFF all three stepper motors (heat protection)
 	digitalWrite(idlerEnablePin, DISABLE);		   // DISABLE the roller bearing motor (motor #1)
 	digitalWrite(extruderEnablePin, DISABLE);	  //  DISABLE the extruder motor  (motor #2)
