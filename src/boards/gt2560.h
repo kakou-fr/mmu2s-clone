@@ -53,4 +53,3 @@
 //SKR
 // P.015 and P.16 (UART1)
 #define SerialPRINTER Serial1
-#define ConsoleSerial Serial

@@ -104,7 +104,6 @@
 /*
 #include <SoftwareSerial.h>
 SoftwareSerial Serials(PB7,PC13); // RX, TX 
-#define SerialPRINTER Serials
 */
 
 #define USB_CONNECT_PIN                     PC13

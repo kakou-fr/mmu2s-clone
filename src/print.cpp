@@ -10,11 +10,17 @@ IOPrint::IOPrint()
 void IOPrint::setup()
 {
 #ifdef SERIAL_DEBUG
-    Serial.begin(250000); // startup the local serial interface (changed to 2 Mbaud on 10.7.18
-    //while (!Serial)
+#if defined(CDC_SERIAL)
+	USB_Init();			// USB Initialization
+	USB_Connect(FALSE); // USB clear connection
+	delay(1000);		// Give OS time to notice
+	USB_Connect(TRUE);
+#endif
+    ConsoleSerial.begin(250000); // startup the local serial interface (changed to 2 Mbaud on 10.7.18
+    //while (!ConsoleSerial)
     //{
         delay(200); // wait for serial port to connect. needed for native USB port only
-        Serial.println("waiting for serial port");
+        ConsoleSerial.println("waiting for serial port");
     //}
     
 #endif
@@ -23,7 +29,7 @@ void IOPrint::setup()
 void println_log(const char *msg)
 {
 #ifdef SERIAL_DEBUG
-    Serial.println(msg);
+    ConsoleSerial.println(msg);
 #endif
 }
 
@@ -31,34 +37,34 @@ void println_log(const char *msg)
 void println_log(int msg)
 {
 #ifdef SERIAL_DEBUG
-    Serial.println(msg);
+    ConsoleSerial.println(msg);
 #endif
 }
 
 void println_log(unsigned int msg)
 {
 #ifdef SERIAL_DEBUG
-    Serial.println(msg);
+    ConsoleSerial.println(msg);
 #endif
 }
 
 void println_log(char msg)
 {
 #ifdef SERIAL_DEBUG
-    Serial.println(msg);
+    ConsoleSerial.println(msg);
 #endif
 }
 
 void print_log(const char *msg)
 {
 #ifdef SERIAL_DEBUG
-    Serial.println(msg);
+    ConsoleSerial.print(msg);
 #endif
 }
 
 void print_log(char msg)
 {
 #ifdef SERIAL_DEBUG
-    Serial.println(msg);
+    ConsoleSerial.println(msg);
 #endif
 }

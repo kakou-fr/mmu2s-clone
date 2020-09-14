@@ -2,6 +2,19 @@
 #define PRINT_H
 
 #include <Arduino.h>
+
+#define SERIAL_DEBUG
+
+// for LPC176x
+#define CDC_SERIAL
+#define ConsoleSerial UsbSerial
+// AVR and other
+// #define ConsoleSerial Serial
+
+
+#if defined(CDC_SERIAL)
+#include <CDCSerial.h>
+#endif 
 /*************************/
 // http://www.geeetech.com/wiki/images/9/90/GT2560_sch.pdf
 //
@@ -24,10 +37,6 @@
  *                -----                                             -----
  *                EXP2                                              EXP1
  */
-
-#define SERIAL_DEBUG
-
-
 
 void println_log(const char *msg);
 

@@ -9,10 +9,9 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-
 #include "config.h"
 #include "application.h"
-
+#include "print.h"
 
 #ifdef USE_TMC
 #include <TMCStepper.h>
@@ -45,7 +44,7 @@ int selectorAbsPos[5] = {0 + CSOFFSET[0], CSSTEPS * 1 + CSOFFSET[1], CSSTEPS * 2
 #define CCW 1
 
 // used for 3 states of the idler stepper motor (
-#define INACTIVE 0	// parked
+#define INACTIVE 0	  // parked
 #define ACTIVE 1	  // not parked
 #define QUICKPARKED 2 // quick parked
 
@@ -61,7 +60,7 @@ int currentPosition = 0;
 int repeatTCmdFlag = INACTIVE; // used by the 'C' command processor to avoid processing multiple 'C' commands
 
 int oldBearingPosition = 0; // this tracks the roller bearing position (top motor on the MMU)
-int filamentSelection = 0;  // keep track of filament selection (0,1,2,3,4))
+int filamentSelection = 0;	// keep track of filament selection (0,1,2,3,4))
 int dummy[100];
 char currentExtruder = '0';
 
@@ -80,7 +79,7 @@ char *BUFFER_SERIAL_USB;
 char *BUFFER_SERIAL_PRINTER;
 
 #ifdef MMU2_1S
-	int findaStatus = 0;
+int findaStatus = 0;
 #endif
 
 /*****************************************************
@@ -91,14 +90,14 @@ char *BUFFER_SERIAL_PRINTER;
 void Application::setup()
 {
 	int waitCount;
-    BUFFER_SERIAL_USB =  (char*)calloc(BUFFER_SIZE+1, sizeof(char));
-	BUFFER_SERIAL_PRINTER = (char*)calloc(BUFFER_SIZE+1, sizeof(char));
-	#if defined(USB_CONNECT_PIN) && defined(USB_CONNECT_INVERTING)
-		pinMode(USB_CONNECT_PIN, OUTPUT);
-		digitalWrite(USB_CONNECT_PIN, (!USB_CONNECT_INVERTING) ? HIGH : LOW);  // USB clear connection
-		delay(1000);                                         // Give OS time to notice
-		digitalWrite(USB_CONNECT_PIN, USB_CONNECT_INVERTING ? HIGH : LOW);
-	#endif
+	BUFFER_SERIAL_USB = (char *)calloc(BUFFER_SIZE + 1, sizeof(char));
+	BUFFER_SERIAL_PRINTER = (char *)calloc(BUFFER_SIZE + 1, sizeof(char));
+#if defined(USB_CONNECT_PIN) && defined(USB_CONNECT_INVERTING)
+	pinMode(USB_CONNECT_PIN, OUTPUT);
+	digitalWrite(USB_CONNECT_PIN, (!USB_CONNECT_INVERTING) ? HIGH : LOW); // USB clear connection
+	delay(1000);														  // Give OS time to notice
+	digitalWrite(USB_CONNECT_PIN, USB_CONNECT_INVERTING ? HIGH : LOW);
+#endif
 
 	/************/
 	ioprint.setup();
@@ -122,7 +121,7 @@ void Application::setup()
 	while (!SerialPRINTER.available())
 	{
 		println_log("Sending START command to mk3 controller board");
-    	println_log("Starting new beta v 1.0");
+		println_log("Starting new beta v 1.0");
 		SerialPRINTER.print("start\n"); // attempt to tell the mk3 that the mmu is present
 		println_log("Waiting for message from mk3");
 		delay(1000);
@@ -141,9 +140,8 @@ continue_processing:
 	pinMode(idlerStepPin, OUTPUT);
 	pinMode(idlerEnablePin, OUTPUT);
 
-	pinMode(findaPin, INPUT);					// MMU pinda Filament sensor
-	pinMode(filamentSwitch, INPUT);				// extruder Filament sensor
-
+	pinMode(findaPin, INPUT);		// MMU pinda Filament sensor
+	pinMode(filamentSwitch, INPUT); // extruder Filament sensor
 
 	pinMode(extruderEnablePin, OUTPUT);
 	pinMode(extruderDirPin, OUTPUT);
@@ -165,61 +163,61 @@ continue_processing:
 	idlerDriver.beginSerial(TMC_BAUD_RATE);
 
 	bool stealth = false;
-    TMC2208_n::GCONF_t gconf{0};
-    gconf.pdn_disable = true; // Use UART
-    gconf.mstep_reg_select = true; // Select microsteps with UART
-    gconf.i_scale_analog = false;
-    gconf.en_spreadcycle = !stealth;
-    idlerDriver.GCONF(gconf.sr);
+	TMC2208_n::GCONF_t gconf{0};
+	gconf.pdn_disable = true;	   // Use UART
+	gconf.mstep_reg_select = true; // Select microsteps with UART
+	gconf.i_scale_analog = false;
+	gconf.en_spreadcycle = !stealth;
+	idlerDriver.GCONF(gconf.sr);
 
 	idlerDriver.toff(5);
-	 // Enables driver in software
+	// Enables driver in software
 	idlerDriver.rms_current(idlerRMSCurrent, HOLD_MULTIPLIER);
 	idlerDriver.microsteps(idlerMicrosteps);
 	idlerDriver.iholddelay(10);
-	idlerDriver.TPOWERDOWN(128);  // ~2s until driver lowers to hold current
+	idlerDriver.TPOWERDOWN(128); // ~2s until driver lowers to hold current
 
 	TMC2208_n::PWMCONF_t pwmconf{0};
-    pwmconf.pwm_lim = 12;
-    pwmconf.pwm_reg = 8;
-    pwmconf.pwm_autograd = true;
-    pwmconf.pwm_autoscale = true;
-    pwmconf.pwm_freq = 0b01;
-    pwmconf.pwm_grad = 14;
-    pwmconf.pwm_ofs = 36;
-    idlerDriver.PWMCONF(pwmconf.sr);
+	pwmconf.pwm_lim = 12;
+	pwmconf.pwm_reg = 8;
+	pwmconf.pwm_autograd = true;
+	pwmconf.pwm_autoscale = true;
+	pwmconf.pwm_freq = 0b01;
+	pwmconf.pwm_grad = 14;
+	pwmconf.pwm_ofs = 36;
+	idlerDriver.PWMCONF(pwmconf.sr);
 	idlerDriver.GSTAT(0b111); // Clear
 
 	digitalWrite(extruderEnablePin, DISABLE);
 	extruderDriver.beginSerial(TMC_BAUD_RATE);
 
-    extruderDriver.GCONF(gconf.sr);
+	extruderDriver.GCONF(gconf.sr);
 
 	extruderDriver.toff(5); // Enables driver in software
 	extruderDriver.rms_current(extruderRMSCurrent, HOLD_MULTIPLIER);
 	extruderDriver.microsteps(extruderMicrosteps);
 	extruderDriver.iholddelay(10);
-	extruderDriver.TPOWERDOWN(128);  // ~2s until driver lowers to hold current
-    extruderDriver.PWMCONF(pwmconf.sr);
+	extruderDriver.TPOWERDOWN(128); // ~2s until driver lowers to hold current
+	extruderDriver.PWMCONF(pwmconf.sr);
 	extruderDriver.GSTAT(0b111); // Clear
 
-	#ifdef MMU2S
-		digitalWrite(colorSelectorEnablePin, ENABLE);
-		colorSelectorDriver.beginSerial(TMC_BAUD_RATE);
-	#endif
-	
+#ifdef MMU2S
+	digitalWrite(colorSelectorEnablePin, ENABLE);
+	colorSelectorDriver.beginSerial(TMC_BAUD_RATE);
+#endif
+
 #else
 	// Turn OFF all three stepper motors (heat protection)
 	digitalWrite(idlerEnablePin, DISABLE);		   // DISABLE the roller bearing motor (motor #1)
-	digitalWrite(extruderEnablePin, DISABLE);	  //  DISABLE the extruder motor  (motor #2)
-	#ifdef MMU2S
-		digitalWrite(colorSelectorEnablePin, DISABLE); // DISABLE the color selector motor  (motor #3)
-	#endif
+	digitalWrite(extruderEnablePin, DISABLE);	   //  DISABLE the extruder motor  (motor #2)
+#ifdef MMU2S
+	digitalWrite(colorSelectorEnablePin, DISABLE); // DISABLE the color selector motor  (motor #3)
+#endif
 #endif
 
 	// Initialize stepper
 	println_log("Syncing the Idler Selector Assembly"); // do this before moving the selector motor
-	initIdlerPosition();								   // reset the roller bearing position
+	initIdlerPosition();								// reset the roller bearing position
 
 #ifdef MMU2S
 	println_log("Syncing the Filament Selector Assembly");
@@ -249,9 +247,9 @@ void Application::loop()
 	// check the serial interface for input commands from the mk3
 	checkSerialInterface();
 
-#ifdef SERIAL_DEBUG
+#ifdef SERIAL_INTERACTIVE
 	// check for keyboard input
-	if (Serial.available())
+	if (ConsoleSerial.available())
 	{
 		println_log("Key was hit ");
 
@@ -299,21 +297,21 @@ void Application::loop()
 			print_log("FINDA status: ");
 			int fstatus = digitalRead(findaPin);
 			println_log(fstatus);
-			#ifdef MMU2S
+#ifdef MMU2S
 			print_log("colorSelectorEnstop status: ");
 			int cdenstatus = digitalRead(colorSelectorEnstop);
 			println_log(cdenstatus);
-			#endif
+#endif
 			print_log("Extruder endstop status: ");
 			fstatus = digitalRead(filamentSwitch);
-			Serial.println(fstatus);
+			print_log(fstatus);
 			println_log("PINDA | EXTRUDER");
 			while (true)
 			{
 				isFilamentLoadedPinda() ? print_log("ON    | ") : print_log("OFF   | ");
 				isFilamentLoadedtoExtruder() ? println_log("ON") : println_log("OFF");
 				delay(200);
-				if (Serial.available())
+				if (ConsoleSerial.available())
 				{
 					ReadSerialStrUntilNewLine();
 					break;
@@ -341,40 +339,40 @@ void Application::loop()
  *****************************************************/
 void ReadSerialStrUntilNewLine()
 {
-	BUFFER_SERIAL_USB[0]='\0';
+	BUFFER_SERIAL_USB[0] = '\0';
 	char c = -1;
-	int i=0;
-	while ((c != '\n') && (c != '\r') && i<BUFFER_SIZE)
+	int i = 0;
+	while ((c != '\n') && (c != '\r') && i < BUFFER_SIZE)
 	{
-		if (Serial.available())
+		if (ConsoleSerial.available())
 		{
-			c = char(Serial.read());
+			c = char(ConsoleSerial.read());
 			if (c != -1)
 			{
-				BUFFER_SERIAL_USB[i++]= c;
+				BUFFER_SERIAL_USB[i++] = c;
 			}
 		}
 	}
-	BUFFER_SERIAL_USB[i]='\0';
+	BUFFER_SERIAL_USB[i] = '\0';
 }
 
 void ReadSerialPRINTERStrUntilNewLine()
 {
-	BUFFER_SERIAL_PRINTER[0]='\0';
+	BUFFER_SERIAL_PRINTER[0] = '\0';
 	char c = -1;
-	int i=0;
-	while ((c != '\n') && (c != '\r') && i<BUFFER_SIZE)
+	int i = 0;
+	while ((c != '\n') && (c != '\r') && i < BUFFER_SIZE)
 	{
 		if (SerialPRINTER.available())
 		{
 			c = char(SerialPRINTER.read());
 			if (c != -1)
 			{
-				BUFFER_SERIAL_PRINTER[i++]= c;
+				BUFFER_SERIAL_PRINTER[i++] = c;
 			}
 		}
 	}
-	BUFFER_SERIAL_PRINTER[i]='\0';
+	BUFFER_SERIAL_PRINTER[i] = '\0';
 }
 
 /*****************************************************
@@ -555,7 +553,7 @@ void checkSerialInterface()
  * this routine is the common routine called for fixing the filament issues (loading or unloading)
  *
  *****************************************************/
-void fixTheProblem(const char* statement)
+void fixTheProblem(const char *statement)
 {
 	println_log("");
 	println_log("********************* ERROR ************************");
@@ -568,27 +566,27 @@ void fixTheProblem(const char* statement)
 	isFilamentLoadedtoExtruder() ? println_log("ON") : println_log("OFF");
 	println_log("");
 	//FIXME
-	// IF POSSIBLE : 
+	// IF POSSIBLE :
 	// SYNC COLORSELECTOR
 	// SYNC IDLER
-	parkIdler();								   // park the idler stepper motor
+	parkIdler(); // park the idler stepper motor
 #ifdef MMU2S
 	digitalWrite(colorSelectorEnablePin, DISABLE); // turn off the selector stepper motor
 #endif
 
-#ifdef SERIAL_DEBUG
-	while (!Serial.available())
+#ifdef SERIAL_INTERACTIVE
+	while (!ConsoleSerial.available())
 	{
 		//  wait until key is entered to proceed  (this is to allow for operator intervention)
 	}
 	ReadSerialStrUntilNewLine(); // clear the keyboard buffer
 #endif
 
-	unParkIdler();								  // put the idler stepper motor back to its' original position
+	unParkIdler(); // put the idler stepper motor back to its' original position
 #ifdef MMU2S
 	digitalWrite(colorSelectorEnablePin, ENABLE); // turn ON the selector stepper motor
 #endif
-	delay(1);									  // wait for 1 millisecond
+	delay(1); // wait for 1 millisecond
 }
 
 #ifdef MMU2S
@@ -889,8 +887,6 @@ void idlerSelector(char filament)
 	oldBearingPosition = newBearingPosition;
 }
 
-
-
 /*****************************************************
  *
  * turn the idler stepper motor
@@ -1048,7 +1044,7 @@ void unloadFilamentToFinda()
 	delay(1);
 
 #ifdef FILAMENTSWITCH_BEFORE_EXTRUDER
-	feedFilament(STEPSPERMM * 2* DIST_EXTRUDER_BTGEAR, STOP_AT_EXTRUDER);
+	feedFilament(STEPSPERMM * 2 * DIST_EXTRUDER_BTGEAR, STOP_AT_EXTRUDER);
 	feedFilament(STEPSPERMM * 10, IGNORE_STOP_AT_EXTRUDER);
 #endif
 	startTime = millis();
@@ -1101,7 +1097,6 @@ loop:
 #endif
 }
 
-
 /***************************************************************************************************************
  ***************************************************************************************************************
  * 
@@ -1128,7 +1123,7 @@ void parkIdler()
 	idlerturnamount(newSetting, CCW); // move the bearing roller out of the way
 	idlerStatus = INACTIVE;
 
-	digitalWrite(idlerEnablePin, DISABLE);	// turn off the roller bearing stepper motor  (nice to do, cuts down on CURRENT utilization)
+	digitalWrite(idlerEnablePin, DISABLE);	  // turn off the roller bearing stepper motor  (nice to do, cuts down on CURRENT utilization)
 	digitalWrite(extruderEnablePin, DISABLE); // turn off the extruder stepper motor as well
 }
 
@@ -1328,7 +1323,7 @@ void filamentLoadToMK3()
 #ifdef MMU2S
 	int startTime, currentTime;
 	startTime = millis();
-	
+
 loop:
 	feedFilament(STEPSPERMM, IGNORE_STOP_AT_EXTRUDER); // feed 1 mm of filament into the bowden tube
 
@@ -1359,7 +1354,6 @@ loop1:
 
 	// go DIST_MMU_EXTRUDER mm
 	feedFilament(STEPSPERMM * DIST_MMU_EXTRUDER, STOP_AT_EXTRUDER);
-
 
 #ifdef FILAMENTSWITCH_BEFORE_EXTRUDER
 	// insert until the 2nd filament sensor

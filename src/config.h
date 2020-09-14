@@ -2,10 +2,12 @@
 #define CONFIG_H
 
 
-//#define DEBUG
+#define DEBUG
 #define DEBUGMODE
 #define SERIAL1ENABLED    1
 #define S1_WAIT_TIME 10  //wait time for serial 1 (mmu<->printer)
+
+#define SERIAL_INTERACTIVE  // allow to control the MMU from USB interface
 
 
 //STEPPER
