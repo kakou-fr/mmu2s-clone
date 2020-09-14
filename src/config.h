@@ -116,7 +116,9 @@ int CSOFFSET[5] = {30,30,0,-15,-30};
 // #include "boards/gt2560.h"
 // #include "boards/melzi.h"
 //#include "boards/skr-mini-e3-1_2.h"
- #include "boards/skr-mini-e3-dip-1_1.h"
-// #include "boards/skr-1.3.h"
+//#include "boards/skr-mini-e3-dip-1_1.h"
+//#include "boards/skr-1.3.h"
+//#include "boards/skr-1.4.h"
+#include "boards/skr-1.4-turbo.h"
 
 #endif
