@@ -28,7 +28,7 @@
 
 //VERSION
 #define MMU2_VERSION "5.0  29/06/20"
-#define FW_VERSION 90             // config.h  (MM-control-01 firmware)
+#define FW_VERSION 150             // config.h  (MM-control-01 firmware)
 #define FW_BUILDNR 168             // config.h  (MM-control-01 firmware)
 
 #define TIMEOUT_LOAD_UNLOAD 20000
