@@ -90,7 +90,7 @@ int CSOFFSET[5] = {30,30,0,-15,-30};
 #define EXTRUDERMOTORDELAY 60//50     // 150 useconds    (controls filament feed speed to the printer)
 #define COLORSELECTORMOTORDELAY 60 // 60 useconds    (selector motor)
 
-#define PindaON 0
+#define PindaON 1
 #define filamentSwitchON 0
 
 //#define FILAMENTSWITCH_BEFORE_EXTRUDER // turn on if the filament switch is before the extruder, turn off for the mk3s-mmu filament switch
