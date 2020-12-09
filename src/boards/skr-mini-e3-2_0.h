@@ -70,15 +70,15 @@
 #define idlerAddress Y_SERIAL_ADDRESS
 
 // Extruder stepper motor
-#define extruderStepPin  E0_STEP_PIN 
-#define extruderDirPin  E0_DIR_PIN
-#define extruderEnablePin E0_ENABLE_PIN
+#define extruderStepPin  X_STEP_PIN 
+#define extruderDirPin  X_DIR_PIN
+#define extruderEnablePin X_ENABLE_PIN
 #define extruderRMSCurrent 750
 #define extruderSerialRXPin SERIAL_RX_PIN
 #define extruderSerialTXPin SERIAL_TX_PIN
-#define extruderRSense E0_RSENSE
-#define extruderMicrosteps E0_MICROSTEPS
-#define extruderAddress E0_SERIAL_ADDRESS
+#define extruderRSense X_RSENSE
+#define extruderMicrosteps X_MICROSTEPS
+#define extruderAddress X_SERIAL_ADDRESS
 
 
 #define findaPin  X_STOP_PIN

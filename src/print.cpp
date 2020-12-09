@@ -1,4 +1,5 @@
 #include "print.h"
+#include "config.h"
 
 char BUFFER[512];
 

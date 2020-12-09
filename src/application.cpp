@@ -43,6 +43,8 @@ IOPrint ioprint;
 
 int command = 0;
 
+int IDLEROFFSET[5] = {0,0,0,0,0};
+
 // absolute position of bearing stepper motor
 int bearingAbsPos[5] = {0 + IDLEROFFSET[0], IDLERSTEPSIZE + IDLEROFFSET[1], IDLERSTEPSIZE * 2 + IDLEROFFSET[2], IDLERSTEPSIZE * 3 + IDLEROFFSET[3], IDLERSTEPSIZE * 4 + IDLEROFFSET[4]};
 #ifdef MMU2S
@@ -170,24 +172,13 @@ continue_processing:
 	println_log("finished setting up input and output pins");
 
 #ifdef USE_TMC
-	digitalWrite(idlerEnablePin, DISABLE);
-	idlerDriver.beginSerial(TMC_BAUD_RATE);
-
+    /***** ******/
 	bool stealth = false;
 	TMC2208_n::GCONF_t gconf{0};
 	gconf.pdn_disable = true;	   // Use UART
 	gconf.mstep_reg_select = true; // Select microsteps with UART
 	gconf.i_scale_analog = false;
 	gconf.en_spreadcycle = !stealth;
-	idlerDriver.GCONF(gconf.sr);
-
-	idlerDriver.toff(5);
-	// Enables driver in software
-	idlerDriver.rms_current(idlerRMSCurrent, HOLD_MULTIPLIER);
-	idlerDriver.microsteps(idlerMicrosteps);
-	idlerDriver.iholddelay(10);
-	idlerDriver.TPOWERDOWN(128); // ~2s until driver lowers to hold current
-
 	TMC2208_n::PWMCONF_t pwmconf{0};
 	pwmconf.pwm_lim = 12;
 	pwmconf.pwm_reg = 8;
@@ -196,9 +187,21 @@ continue_processing:
 	pwmconf.pwm_freq = 0b01;
 	pwmconf.pwm_grad = 14;
 	pwmconf.pwm_ofs = 36;
+	/*****   IDLER  ******/
+	digitalWrite(idlerEnablePin, DISABLE);
+	idlerDriver.beginSerial(TMC_BAUD_RATE);
+
+	idlerDriver.GCONF(gconf.sr);
+
+	idlerDriver.toff(5);
+	// Enables driver in software
+	idlerDriver.rms_current(idlerRMSCurrent, HOLD_MULTIPLIER);
+	idlerDriver.microsteps(idlerMicrosteps);
+	idlerDriver.iholddelay(10);
+	idlerDriver.TPOWERDOWN(128); // ~2s until driver lowers to hold current
 	idlerDriver.PWMCONF(pwmconf.sr);
 	idlerDriver.GSTAT(0b111); // Clear
-
+	/*****   GEAR  ******/
 	digitalWrite(extruderEnablePin, DISABLE);
 	extruderDriver.beginSerial(TMC_BAUD_RATE);
 

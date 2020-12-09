@@ -72,7 +72,6 @@
 //*************************************************************************************
 //* IDLER
 //*************************************************************************************
-int IDLEROFFSET[5] = {0,0,0,0,0};
 #define IDLERSTEPSIZE 25         // steps to each roller bearing
 #define IDLERMOTORDELAY  540     //540 useconds      (idler motor)  was at '500' on 10.13.18
 #define MAXROLLERTRAVEL 125         // number of steps that the roller bearing stepper motor can travel
@@ -123,5 +122,18 @@ int CSOFFSET[5] = {30,30,0,-15,-30};
 //  #include "boards/skr-1.3.h"
 //  #include "boards/skr-1.4.h"
 //  #include "boards/skr-1.4-turbo.h"
+
+#define SERIAL_DEBUG
+
+// for LPC176x
+//#define CDC_SERIAL
+//#define ConsoleSerial UsbSerial
+// AVR and other
+#define ConsoleSerial Serial
+
+
+#if defined(CDC_SERIAL)
+#include <CDCSerial.h>
+#endif 
 
 #endif
