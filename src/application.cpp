@@ -15,12 +15,23 @@
 
 #ifdef USE_TMC
 #include <TMCStepper.h>
-
 #define DRIVER_ADDRESS 0b00 // TMC2209 Driver address according to MS1 and MS2
+#ifdef idlerAddress
+TMC2209Stepper idlerDriver(idlerSerialRXPin, idlerSerialTXPin, idlerRSense, idlerAddress);
+#else
 TMC2209Stepper idlerDriver(idlerSerialRXPin, idlerSerialTXPin, idlerRSense, DRIVER_ADDRESS);
+#endif
+#ifdef idlerAddress
+TMC2209Stepper extruderDriver(extruderSerialRXPin, extruderSerialTXPin, extruderRSense, extruderAddress);
+#else
 TMC2209Stepper extruderDriver(extruderSerialRXPin, extruderSerialTXPin, extruderRSense, DRIVER_ADDRESS);
+#endif
 #ifdef MMU2S
+#ifdef idlerAddress
+TMC2209Stepper colorSelectorDriver(colorSelectorSerialRXPin, colorSelectorSerialTXPin, colorSelectorRSense, colorAddress);
+#else
 TMC2209Stepper colorSelectorDriver(colorSelectorSerialRXPin, colorSelectorSerialTXPin, colorSelectorRSense, DRIVER_ADDRESS);
+#endif
 #endif
 #endif
 
