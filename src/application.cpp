@@ -264,15 +264,16 @@ void Application::loop()
 	// check for keyboard input
 	if (ConsoleSerial.available())
 	{
-		println_log("Key was hit ");
-
 		BUFFER_SERIAL_USB = ReadSerialStrUntilNewLine();
 		// ignore protenface message
 		if (BUFFER_SERIAL_USB[0] == ':' || BUFFER_SERIAL_USB[0] == 'M')
 			return;
+		print_log("\n===========================");
+		/*
 		print_log("Message received : '");
 		println_log(BUFFER_SERIAL_USB);
 		print_log("'");
+		*/
 		if (BUFFER_SERIAL_USB[0] == 'C')
 		{
 			println_log("Processing 'C' Command");
@@ -322,7 +323,11 @@ void Application::loop()
 			while (true)
 			{
 				isFilamentLoadedPinda() ? print_log("ON    | ") : print_log("OFF   | ");
+#ifdef IR_ON_MMU
 				isFilamentLoadedtoExtruder() ? println_log("ON") : println_log("OFF");
+#else
+	println_log("???");
+#endif
 				delay(200);
 				if (ConsoleSerial.available())
 				{
@@ -362,13 +367,34 @@ String ReadSerialStrUntilNewLine()
 			c = char(ConsoleSerial.read());
 			if (c != -1)
 			{
-				str += c;
+				if ((c != '\n') && (c != '\r')){
+					str += c;
+					ConsoleSerial.print(c);
+				}
 			}
 		}
 	}
 	return str;
 }
 
+String ReadPrinterSerialStrUntilNewLine()
+{
+	String str = "";
+	char c = -1;
+	while ((c != '\n') && (c != '\r'))
+	{
+		if (SerialPRINTER.available())
+		{
+			c = char(SerialPRINTER.read());
+			if (c != -1)
+			{
+				if ((c != '\n') && (c != '\r'))
+					str += c;
+			}
+		}
+	}
+	return str;
+}
 
 /*****************************************************
  *
@@ -377,27 +403,26 @@ String ReadSerialStrUntilNewLine()
  *****************************************************/
 void checkSerialInterface()
 {
-	int cnt;
 	String inputLine;
 	int index;
 
 	index = 0;
-	if ((cnt = SerialPRINTER.available()) > 0)
+	if (SerialPRINTER.available() > 0)
 	{
 
-		inputLine = SerialPRINTER.readString(); // fetch the command from the mmu2 serial input interface
-
+		inputLine = ReadPrinterSerialStrUntilNewLine(); // fetch the command from the mmu2 serial input interface 
+		if (inputLine == "") return;
 		if (inputLine[0] != 'P')
 		{
-			print_log("MMU Command: ");
-			println_log(inputLine);
+			print_log("MMU Command: '");
+			print_log(inputLine);
+			println_log("'");
 		}
-	process_more_commands: // parse the inbound command
 		unsigned char c1, c2;
 
 		c1 = inputLine[index++]; // fetch single characer from the input line
 		c2 = inputLine[index++]; // fetch 2nd character from the input line
-		inputLine[index++];		 // carriage return
+		//inputLine[index++];		 // carriage return
 
 		// process commands coming from the mk3 controller
 		//***********************************************************************************
@@ -544,12 +569,6 @@ void checkSerialInterface()
 		} // end of switch statement
 
 	} // end of cnt > 0 check
-
-	if (index < cnt)
-	{
-		goto process_more_commands;
-	}
-	// }  // check for early commands
 }
 
 /*****************************************************
@@ -565,9 +584,13 @@ void fixTheProblem(const char *statement)
 	println_log("********************* ERROR ************************");
 	println_log("Clear the problem and then hit any key to continue ");
 	println_log("");
-	println_log("PINDA | EXTRUDER");
+	print_log("PINDA | EXTRUDER");
 	isFilamentLoadedPinda() ? print_log("ON    | ") : print_log("OFF   | ");
+#ifdef IR_ON_MMU
 	isFilamentLoadedtoExtruder() ? println_log("ON") : println_log("OFF");
+#else
+	println_log("???");
+#endif
 	println_log("");
 	//FIXME
 	// IF POSSIBLE :
@@ -939,8 +962,12 @@ void feedFilament(unsigned int steps, int stoptoextruder)
 
 		delayMicroseconds(EXTRUDERMOTORDELAY); // wait for 400 useconds
 		//delay(delayValue);           // wait for 30 milliseconds
+#ifdef IR_ON_MMU
 		if ((stoptoextruder) && isFilamentLoadedtoExtruder())
 			break;
+#else
+//TODO
+#endif
 	}
 }
 
@@ -969,6 +996,7 @@ int isFilamentLoadedPinda()
 #endif
 }
 
+#ifdef IR_ON_MMU
 /*****************************************************
  *
  * Check if Filament is loaded into extruder
@@ -980,6 +1008,7 @@ bool isFilamentLoadedtoExtruder()
 	fStatus = digitalRead(filamentSwitch);
 	return (fStatus == filamentSwitchON);
 }
+#endif
 
 /***************************************************************************************************************
  ***************************************************************************************************************
@@ -1059,7 +1088,7 @@ loop:
 #endif
 
 	currentTime = millis();
-
+#ifdef IR_ON_MMU
 	// read the filament switch (on the top of the mk3 extruder)
 	if (isFilamentLoadedtoExtruder())
 	{
@@ -1070,15 +1099,13 @@ loop:
 			startTime1 = millis();
 		}
 	}
-	else
+#endif
+	// check for timeout waiting for FINDA sensor to trigger
+	if ((currentTime - startTime) > TIMEOUT_LOAD_UNLOAD)
 	{
-		// check for timeout waiting for FINDA sensor to trigger
-		if ((currentTime - startTime) > TIMEOUT_LOAD_UNLOAD)
-		{
-			// 10 seconds worth of trying to unload the filament
-			fixTheProblem("unloadFilamentToFinda(): UNLOAD FILAMENT ERROR: filament is not unloading properly, stuck between mk3 and mmu2");
-			startTime = millis(); // reset the start time
-		}
+		// 10 seconds worth of trying to unload the filament
+		fixTheProblem("unloadFilamentToFinda(): UNLOAD FILAMENT ERROR: filament is not unloading properly, stuck between mk3 and mmu2");
+		startTime = millis(); // reset the start time
 	}
 
 #ifdef MMU2S
@@ -1349,13 +1376,14 @@ loop:
 #endif
 
 loop1:
+#ifdef IR_ON_MMU
 	if (isFilamentLoadedtoExtruder())
 	{
 		// switch is active (this is not a good condition)
 		fixTheProblem("FILAMENT LOAD ERROR: Filament Switch in the MK3 is active (see the RED LED), it is either stuck open or there is debris");
 		goto loop1;
 	}
-
+#endif
 	// go DIST_MMU_EXTRUDER mm
 	feedFilament(STEPSPERMM * DIST_MMU_EXTRUDER, STOP_AT_EXTRUDER);
 
@@ -1437,19 +1465,34 @@ bool filamentLoadWithBondTechGear()
 	digitalWrite(greenLED, HIGH); // turn on the green LED (for debug purposes)
 
 	// feed the filament from the MMU2 into the bondtech gear
+#ifdef IR_ON_MMU
 	tSteps = STEPSPERMM * ((float)LOAD_DURATION / 1000.0) * LOAD_SPEED;			// compute the number of steps to take for the given load duration
 	delayFactor = (float(LOAD_DURATION * 1000.0) / tSteps) - INSTRUCTION_DELAY; // delayFactor algorithm
-
+	const unsigned long fist_segment_delay = delayFactor;
+#else
+	const unsigned long fist_segment_delay = 2600;
+	tSteps = 770;
+	delayFactor = fist_segment_delay;
+#endif
 	digitalWrite(extruderEnablePin, ENABLE); // turn on the extruder stepper motor
 	digitalWrite(extruderDirPin, CCW);		 // set extruder stepper motor to push filament towards the mk3
 
 	for (i = 0; i < tSteps; i++)
 	{
+		delayMicroseconds(delayFactor);
+		unsigned long now = micros();
+
+		if('A' == SerialPRINTER.read())
+		{
+			println_log("C Command: A received");
+			parkIdler();
+			return true;
+		}
 		digitalWrite(extruderStepPin, HIGH); // step the extruder stepper in the MMU2 unit
 		delayMicroseconds(PINHIGH);
 		digitalWrite(extruderStepPin, LOW);
-		delayMicroseconds(delayFactor);
 		++stepCount;
+		delayFactor = fist_segment_delay - (micros() - now);
 	}
 	digitalWrite(greenLED, LOW); // turn off the green LED (for debug purposes)
 
@@ -1469,6 +1512,12 @@ bool filamentLoadWithBondTechGear()
 	}
 	println_log("filamentLoadWithBondTechGear() : FILAMENT LOAD ERROR:  Filament not detected by EXTRUDER sensor, check the EXTRUDER");
 	return false;
+#endif
+
+#ifndef IR_ON_MMU
+	println_log("filamentLoadWithBondTechGear() : No A received, waiting for new C0");
+	// always return ok
+	return true;
 #endif
 
 #ifdef DEBUG

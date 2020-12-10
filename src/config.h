@@ -104,11 +104,13 @@ int CSOFFSET[5] = {30,30,0,-15,-30};
 //  SENSORS
 //*************************************************************************************************
 #define PindaON 0
-#define filamentSwitchON 1
 
+//#define IR_ON_MMU // define if IR is connected on the MMU board, comment if IR is on printer board
+#ifdef  IR_ON_MMU
+#define filamentSwitchON 1
 //#define FILAMENTSWITCH_BEFORE_EXTRUDER // turn on if the filament switch is before the extruder, turn off for the mk3s-mmu filament switch
 #define FILAMENTSWITCH_ON_EXTRUDER // turn on if the filament switch on is the extruder, turn on for the mk3s-mmu filament switch
-
+#endif
 
 //*************************************************************************************************
 //  BOARD
