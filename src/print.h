@@ -26,7 +26,7 @@
  *                EXP2                                              EXP1
  */
 
-void println_log(const char *msg);
+void println_log(String msg);
 
 void println_log(int msg);
 
@@ -34,7 +34,7 @@ void println_log(unsigned int msg);
 
 void println_log(char msg);
 
-void print_log(const char *msg);
+void print_log(String msg);
 
 void print_log(char msg);
 

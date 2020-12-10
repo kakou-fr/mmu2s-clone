@@ -1,4 +1,5 @@
 #define USE_TMC
+#define SOFTWARE_RESET
 
 #define HOLD_MULTIPLIER 0.5
 #define TMC_BAUD_RATE 19200 // Reduce baud rate to improve software serial reliability

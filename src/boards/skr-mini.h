@@ -6,6 +6,8 @@
 // modified code on 10.2.18 to accomodate RAMPS 1.6 board mapping
 //
 
+#define SOFTWARE_RESET
+
 
 #ifdef MMU2S
 //PIN X

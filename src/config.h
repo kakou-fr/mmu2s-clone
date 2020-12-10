@@ -5,9 +5,10 @@
 #define DEBUG
 #define DEBUGMODE
 #define SERIAL1ENABLED    1
-#define S1_WAIT_TIME 10  //wait time for serial 1 (mmu<->printer)
+#define S1_WAIT_TIME 100  //wait time for serial 1 (mmu<->printer)
 
 #define SERIAL_INTERACTIVE  // allow to control the MMU from USB interface
+#define SERIAL_DEBUG
 
 
 //STEPPER
@@ -103,7 +104,7 @@ int CSOFFSET[5] = {30,30,0,-15,-30};
 //  SENSORS
 //*************************************************************************************************
 #define PindaON 0
-#define filamentSwitchON 0
+#define filamentSwitchON 1
 
 //#define FILAMENTSWITCH_BEFORE_EXTRUDER // turn on if the filament switch is before the extruder, turn off for the mk3s-mmu filament switch
 #define FILAMENTSWITCH_ON_EXTRUDER // turn on if the filament switch on is the extruder, turn on for the mk3s-mmu filament switch
@@ -117,13 +118,11 @@ int CSOFFSET[5] = {30,30,0,-15,-30};
 //  #include "boards/gt2560.h"
 //  #include "boards/melzi.h"
 //  #include "boards/skr-mini-e3-1_2.h"
-#include "boards/skr-mini-e3-2_0.h"
-//  #include "boards/skr-mini-e3-dip-1_1.h"
+//#include "boards/skr-mini-e3-2_0.h"
+#include "boards/skr-mini-e3-dip-1_1.h"
 //  #include "boards/skr-1.3.h"
 //  #include "boards/skr-1.4.h"
 //  #include "boards/skr-1.4-turbo.h"
-
-#define SERIAL_DEBUG
 
 // for LPC176x
 //#define CDC_SERIAL

@@ -7,8 +7,7 @@ extern int isFilamentLoadedPinda();
 extern bool isFilamentLoadedtoExtruder();
 
 extern void checkSerialInterface();
-extern void ReadSerialStrUntilNewLine();
-extern void ReadSerialPRINTERStrUntilNewLine();
+extern String ReadSerialStrUntilNewLine();
 
 extern void filamentLoadToMK3();
 extern bool filamentLoadWithBondTechGear();

@@ -27,7 +27,7 @@ void IOPrint::setup()
 #endif
 }
 
-void println_log(const char *msg)
+void println_log(String msg)
 {
 #ifdef SERIAL_DEBUG
     ConsoleSerial.println(msg);
@@ -56,7 +56,7 @@ void println_log(char msg)
 #endif
 }
 
-void print_log(const char *msg)
+void print_log(String msg)
 {
 #ifdef SERIAL_DEBUG
     ConsoleSerial.print(msg);

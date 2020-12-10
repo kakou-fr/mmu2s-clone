@@ -87,10 +87,6 @@ boolean newData = false;
 int idlerStatus = INACTIVE;
 int colorSelectorStatus = INACTIVE;
 
-#define BUFFER_SIZE 256
-char *BUFFER_SERIAL_USB;
-char *BUFFER_SERIAL_PRINTER;
-
 #ifdef MMU2_1S
 int findaStatus = 0;
 #endif
@@ -103,13 +99,14 @@ int findaStatus = 0;
 void Application::setup()
 {
 	int waitCount;
-	BUFFER_SERIAL_USB = (char *)calloc(BUFFER_SIZE + 1, sizeof(char));
-	BUFFER_SERIAL_PRINTER = (char *)calloc(BUFFER_SIZE + 1, sizeof(char));
+
+#ifdef SERIAL_DEBUG
 #if defined(USB_CONNECT_PIN) && defined(USB_CONNECT_INVERTING)
 	pinMode(USB_CONNECT_PIN, OUTPUT);
 	digitalWrite(USB_CONNECT_PIN, (!USB_CONNECT_INVERTING) ? HIGH : LOW); // USB clear connection
 	delay(1000);														  // Give OS time to notice
 	digitalWrite(USB_CONNECT_PIN, USB_CONNECT_INVERTING ? HIGH : LOW);
+#endif
 #endif
 
 	/************/
@@ -125,7 +122,7 @@ void Application::setup()
 	// ***************************************s
 	// THIS NEXT COMMAND IS CRITICAL ... IT TELLS THE MK3 controller that an MMU is present
 	// ***************************************
-	SerialPRINTER.print("start\n"); // attempt to tell the mk3 that the mmu is present
+	//SerialPRINTER.print("start\n"); // attempt to tell the mk3 that the mmu is present
 
 	//***************************
 	//  check the serial interface to see if it is active
@@ -136,6 +133,7 @@ void Application::setup()
 		println_log("Sending START command to mk3 controller board");
 		println_log("Starting new beta v 1.0");
 		SerialPRINTER.print("start\n"); // attempt to tell the mk3 that the mmu is present
+		SerialPRINTER.flush();
 		println_log("Waiting for message from mk3");
 		delay(1000);
 		++waitCount;
@@ -256,6 +254,7 @@ continue_processing:
  *****************************************************/
 void Application::loop()
 {
+	String BUFFER_SERIAL_USB;
 	// wait for 100 milliseconds
 	delay(100);
 	// check the serial interface for input commands from the mk3
@@ -267,7 +266,7 @@ void Application::loop()
 	{
 		println_log("Key was hit ");
 
-		ReadSerialStrUntilNewLine();
+		BUFFER_SERIAL_USB = ReadSerialStrUntilNewLine();
 		// ignore protenface message
 		if (BUFFER_SERIAL_USB[0] == ':' || BUFFER_SERIAL_USB[0] == 'M')
 			return;
@@ -351,43 +350,25 @@ void Application::loop()
  * Serial read until new line
  * 
  *****************************************************/
-void ReadSerialStrUntilNewLine()
+
+String ReadSerialStrUntilNewLine()
 {
-	BUFFER_SERIAL_USB[0] = '\0';
+	String str = "";
 	char c = -1;
-	int i = 0;
-	while ((c != '\n') && (c != '\r') && i < BUFFER_SIZE)
+	while ((c != '\n') && (c != '\r'))
 	{
 		if (ConsoleSerial.available())
 		{
 			c = char(ConsoleSerial.read());
 			if (c != -1)
 			{
-				BUFFER_SERIAL_USB[i++] = c;
+				str += c;
 			}
 		}
 	}
-	BUFFER_SERIAL_USB[i] = '\0';
+	return str;
 }
 
-void ReadSerialPRINTERStrUntilNewLine()
-{
-	BUFFER_SERIAL_PRINTER[0] = '\0';
-	char c = -1;
-	int i = 0;
-	while ((c != '\n') && (c != '\r') && i < BUFFER_SIZE)
-	{
-		if (SerialPRINTER.available())
-		{
-			c = char(SerialPRINTER.read());
-			if (c != -1)
-			{
-				BUFFER_SERIAL_PRINTER[i++] = c;
-			}
-		}
-	}
-	BUFFER_SERIAL_PRINTER[i] = '\0';
-}
 
 /*****************************************************
  *
@@ -397,25 +378,26 @@ void ReadSerialPRINTERStrUntilNewLine()
 void checkSerialInterface()
 {
 	int cnt;
+	String inputLine;
 	int index;
 
 	index = 0;
 	if ((cnt = SerialPRINTER.available()) > 0)
 	{
 
-		ReadSerialPRINTERStrUntilNewLine(); // fetch the command from the mmu2 serial input interface
+		inputLine = SerialPRINTER.readString(); // fetch the command from the mmu2 serial input interface
 
-		if (BUFFER_SERIAL_PRINTER[0] != 'P')
+		if (inputLine[0] != 'P')
 		{
 			print_log("MMU Command: ");
-			println_log(BUFFER_SERIAL_PRINTER);
+			println_log(inputLine);
 		}
 	process_more_commands: // parse the inbound command
 		unsigned char c1, c2;
 
-		c1 = BUFFER_SERIAL_PRINTER[index++]; // fetch single characer from the input line
-		c2 = BUFFER_SERIAL_PRINTER[index++]; // fetch 2nd character from the input line
-		//BUFFER_SERIAL_PRINTER[index++];		 // carriage return
+		c1 = inputLine[index++]; // fetch single characer from the input line
+		c2 = inputLine[index++]; // fetch 2nd character from the input line
+		inputLine[index++];		 // carriage return
 
 		// process commands coming from the mk3 controller
 		//***********************************************************************************
@@ -472,6 +454,14 @@ void checkSerialInterface()
 				SerialPRINTER.print("ok\n");
 			}
 			break;
+#ifdef SOFTWARE_RESET
+		case 'X':
+      		if (c2 == '0'){   //! X0 MMU reset
+      			println_log("reset");
+				nvic_sys_reset();
+			}
+			break;
+#endif
 #ifdef MMU2S
 		case 'L':
 			// request for filament load

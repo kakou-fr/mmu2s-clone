@@ -1,4 +1,5 @@
 #define USE_TMC
+#define SOFTWARE_RESET
 
 #define HOLD_MULTIPLIER    0.5
 #define TMC_BAUD_RATE 19200 // Reduce baud rate to improve software serial reliability
@@ -106,5 +107,5 @@ SoftwareSerial Serials(PB7,PC13); // RX, TX
 #define SerialPRINTER Serials
 */
 
-#define USB_CONNECT_PIN                     PC13
+#define USB_CONNECT_PIN                     PA14
 #define USB_CONNECT_INVERTING false
