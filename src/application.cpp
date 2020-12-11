@@ -48,6 +48,7 @@ int IDLEROFFSET[5] = {0,0,0,0,0};
 // absolute position of bearing stepper motor
 int bearingAbsPos[5] = {0 + IDLEROFFSET[0], IDLERSTEPSIZE + IDLEROFFSET[1], IDLERSTEPSIZE * 2 + IDLEROFFSET[2], IDLERSTEPSIZE * 3 + IDLEROFFSET[3], IDLERSTEPSIZE * 4 + IDLEROFFSET[4]};
 #ifdef MMU2S
+int CSOFFSET[5] = {30,30,0,-15,-30};
 // absolute position of selector stepper motor
 int selectorAbsPos[5] = {0 + CSOFFSET[0], CSSTEPS * 1 + CSOFFSET[1], CSSTEPS * 2 + CSOFFSET[2], CSSTEPS * 3 + CSOFFSET[3], CSSTEPS * 4 + CSOFFSET[4]};
 #endif

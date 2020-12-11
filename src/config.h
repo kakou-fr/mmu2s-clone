@@ -38,9 +38,9 @@
 //* MMU version
 //*************************************************************************************
 // classic MMU2S
-//#define MMU2S
+#define MMU2S
 // splitter version (without color selector)
-#define MMU2_1S
+//#define MMU2_1S
 
 
 //*************************************************************************************
@@ -86,7 +86,6 @@
 // this resets the selector stepper motor after the selected number of tool changes
 #define TOOLSYNC 5                         // number of tool change (T) commands before a selector resync is performed
 #define MAXSELECTOR_STEPS   1800//1890   // maximum number of selector stepper motor (used to move all the way to the right or left
-int CSOFFSET[5] = {30,30,0,-15,-30};
 #define CSSTEPS 357
 #define CS_RIGHT_FORCE 20
 #define CS_RIGHT_FORCE_SELECTOR_0 5
@@ -116,23 +115,24 @@ int CSOFFSET[5] = {30,30,0,-15,-30};
 //  BOARD
 //*************************************************************************************************
 // select the board used for the MMU
-//  #include "boards/skr-mini.h"
+#include "boards/skr-mini.h"
 //  #include "boards/gt2560.h"
 //  #include "boards/melzi.h"
 //  #include "boards/skr-mini-e3-1_2.h"
 //  #include "boards/skr-mini-e3-2_0.h"
-#include "boards/skr-mini-e3-dip-1_1.h"
-
-
-//  #include "boards/skr-1.3.h"
-//  #include "boards/skr-1.4.h"
-//  #include "boards/skr-1.4-turbo.h"
+//#include "boards/skr-mini-e3-dip-1_1.h"
+// AVR and other
+#define ConsoleSerial Serial
 
 // for LPC176x
 //#define CDC_SERIAL
 //#define ConsoleSerial UsbSerial
-// AVR and other
-#define ConsoleSerial Serial
+//  #include "boards/skr-1.3.h"
+//  #include "boards/skr-1.4.h"
+//  #include "boards/skr-1.4-turbo.h"
+
+
+
 
 
 #if defined(CDC_SERIAL)

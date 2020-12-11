@@ -1,8 +1,5 @@
 // https://github.com/bigtreetech/BIGTREETECH-SKR-MINI-V1.1/blob/master/hardware/SKR-mini-V1.1-PIN.pdf
 
-// modified code on 10.2.18 to accomodate RAMPS 1.6 board mapping
-//
-
 #define USE_TMC
 #define SOFTWARE_RESET
 
