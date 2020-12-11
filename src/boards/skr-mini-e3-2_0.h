@@ -1,6 +1,9 @@
 #define USE_TMC
 #define SOFTWARE_RESET
 
+#define USE_TMC_SENSORLESS
+#define TMC_SG_THR_IDL     20  //TMC2209 set to about 20, TMC2130 Set to about 19
+
 #define HOLD_MULTIPLIER    0.5
 #define TMC_BAUD_RATE 19200 // Reduce baud rate to improve software serial reliability
 
@@ -69,6 +72,7 @@
 #define idlerRSense Y_RSENSE
 #define idlerMicrosteps Y_MICROSTEPS
 #define idlerAddress Y_SERIAL_ADDRESS
+#define idlerEndstop Y_STOP_PIN
 
 // Extruder stepper motor
 #define extruderStepPin  X_STEP_PIN 
@@ -82,14 +86,14 @@
 #define extruderAddress X_SERIAL_ADDRESS
 
 
-#define findaPin  X_STOP_PIN
-#define greenLED Y_STOP_PIN // added this pin as a debug pin (lights a green LED so I can see the 'C0' command in action
-
 #ifdef MMU2S
+#define findaPin  X_STOP_PIN
 #define colorSelectorEnstop Z_STOP_PIN
 #endif
 
+#ifdef  IR_ON_MMU
 #define filamentSwitch FIL_RUNOUT_PIN
+#endif
 
 //SKR MINI E3
 //TFT PIN
@@ -107,5 +111,5 @@ SoftwareSerial Serials(PB7,PC13); // RX, TX
 #define SerialPRINTER Serials
 */
 
-#define USB_CONNECT_PIN                     PA14
+#define USB_CONNECT_PIN                     PC13  // PA14
 #define USB_CONNECT_INVERTING false

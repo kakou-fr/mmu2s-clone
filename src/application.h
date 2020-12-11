@@ -34,6 +34,9 @@ extern void csTurnAmount(int steps, int direction);
 extern void initColorSelector();
 extern void syncColorSelector();
 #endif
+#ifdef USE_TMC_SENSORLESS
+extern void idlerturnamountStopAtEndstop(int steps, int dir);
+#endif
 
 class Application
 {

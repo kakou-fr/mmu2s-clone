@@ -150,22 +150,20 @@ continue_processing:
 	pinMode(idlerDirPin, OUTPUT);
 	pinMode(idlerStepPin, OUTPUT);
 	pinMode(idlerEnablePin, OUTPUT);
-
-	pinMode(findaPin, INPUT);		// MMU pinda Filament sensor
+#ifdef  IR_ON_MMU
 	pinMode(filamentSwitch, INPUT); // extruder Filament sensor
-
+#endif
 	pinMode(extruderEnablePin, OUTPUT);
 	pinMode(extruderDirPin, OUTPUT);
 	pinMode(extruderStepPin, OUTPUT);
 
 #ifdef MMU2S
+	pinMode(findaPin, INPUT);		// MMU pinda Filament sensor
 	pinMode(colorSelectorEnablePin, OUTPUT);
 	pinMode(colorSelectorDirPin, OUTPUT);
 	pinMode(colorSelectorStepPin, OUTPUT);
 	pinMode(colorSelectorEnstop, INPUT_PULLUP); // enstop switch sensor
 #endif
-
-	pinMode(greenLED, OUTPUT); // green LED used for debug purposes
 
 	println_log("finished setting up input and output pins");
 
@@ -197,6 +195,9 @@ continue_processing:
 	idlerDriver.microsteps(idlerMicrosteps);
 	idlerDriver.iholddelay(10);
 	idlerDriver.TPOWERDOWN(128); // ~2s until driver lowers to hold current
+#ifdef USE_TMC_SENSORLESS
+	idlerDriver.SGTHRS(TMC_SG_THR_IDL);
+#endif
 	idlerDriver.PWMCONF(pwmconf.sr);
 	idlerDriver.GSTAT(0b111); // Clear
 	/*****   GEAR  ******/
@@ -247,6 +248,8 @@ continue_processing:
 
 } // end of init() routine
 
+
+
 /*****************************************************
  * 
  * infinite loop - core of the program
@@ -268,7 +271,7 @@ void Application::loop()
 		// ignore protenface message
 		if (BUFFER_SERIAL_USB[0] == ':' || BUFFER_SERIAL_USB[0] == 'M')
 			return;
-		print_log("\n===========================");
+		println_log("\n===========================");
 		/*
 		print_log("Message received : '");
 		println_log(BUFFER_SERIAL_USB);
@@ -308,21 +311,27 @@ void Application::loop()
 #ifdef DEBUGMODE
 		if (BUFFER_SERIAL_USB[0] == 'Z')
 		{
+#ifdef MMU2S
 			print_log("FINDA status: ");
 			int fstatus = digitalRead(findaPin);
 			println_log(fstatus);
-#ifdef MMU2S
 			print_log("colorSelectorEnstop status: ");
 			int cdenstatus = digitalRead(colorSelectorEnstop);
 			println_log(cdenstatus);
 #endif
+#ifdef IR_ON_MMU
 			print_log("Extruder endstop status: ");
 			fstatus = digitalRead(filamentSwitch);
 			print_log(fstatus);
+#endif
 			println_log("PINDA | EXTRUDER");
 			while (true)
 			{
+#ifdef MMU2S
 				isFilamentLoadedPinda() ? print_log("ON    | ") : print_log("OFF   | ");
+#else
+	print_log("???    | ");
+#endif
 #ifdef IR_ON_MMU
 				isFilamentLoadedtoExtruder() ? println_log("ON") : println_log("OFF");
 #else
@@ -835,8 +844,13 @@ void initIdlerPosition()
 	digitalWrite(idlerEnablePin, ENABLE); // turn on the roller bearing motor
 	delay(1);
 	oldBearingPosition = 125; // points to position #1
+#ifdef USE_TMC_SENSORLESS
+	idlerturnamountStopAtEndstop(MAXROLLERTRAVEL+20, CW);
+	idlerturnamount(MAXROLLERTRAVEL, CCW); // move the bearings out of the way
+#else
 	idlerturnamount(MAXROLLERTRAVEL, CW);
 	idlerturnamount(MAXROLLERTRAVEL, CCW); // move the bearings out of the way
+#endif
 	digitalWrite(idlerEnablePin, DISABLE); // turn off the idler roller bearing motor
 
 	filamentSelection = 0; // keep track of filament selection (0,1,2,3,4))
@@ -935,6 +949,45 @@ void idlerturnamount(int steps, int dir)
 		delayMicroseconds(IDLERMOTORDELAY);
 	}
 } // end of idlerturnamount() routine
+
+#ifdef USE_TMC_SENSORLESS
+uint8_t tmc_enable_stallguard(TMC2209Stepper &st) {
+  uint8_t stealthchop_was_enabled = !st.en_spreadCycle();
+  delay(5);
+  st.TCOOLTHRS(0xFFFF);
+  st.en_spreadCycle(false);
+  return stealthchop_was_enabled;
+}
+
+void tmc_disable_stallguard(TMC2209Stepper &st, const bool restore_stealth) {
+  st.en_spreadCycle(!restore_stealth);
+  st.TCOOLTHRS(0);
+}
+
+void idlerturnamountStopAtEndstop(int steps, int dir)
+{
+	uint8_t stealth = tmc_enable_stallguard(idlerDriver);
+	digitalWrite(idlerEnablePin, ENABLE); // turn on motor
+	digitalWrite(idlerDirPin, dir);
+	delay(1); // wait for 1 millisecond
+
+	// these command actually move the IDLER stepper motor
+	for (uint16_t i = 0; i < steps * STEPSIZE; i++)
+	{
+		digitalWrite(idlerStepPin, HIGH);
+		delayMicroseconds(PINHIGH); // delay for 10 useconds
+		digitalWrite(idlerStepPin, LOW);
+		//delayMicroseconds(PINLOW);               // delay for 10 useconds
+		if (digitalRead(idlerEndstop) == HIGH){ 
+			println_log("Idler homed");
+			return;
+		}
+		delayMicroseconds(IDLERMOTORDELAY);
+	}
+	tmc_disable_stallguard(idlerDriver,stealth);
+} // end of idlerturnamount() routine
+#endif
+
 
 /***************************************************************************************************************
  ***************************************************************************************************************
@@ -1144,13 +1197,18 @@ loop:
 void parkIdler()
 {
 	int newSetting;
-
 	digitalWrite(idlerEnablePin, ENABLE);
 	delay(1);
-
+#ifdef DEBUG
+	print_log("parkIdler(): oldBearingPosition : ");
+	println_log(oldBearingPosition);
+#endif
 	newSetting = MAXROLLERTRAVEL - oldBearingPosition;
 	oldBearingPosition = MAXROLLERTRAVEL; // record the current roller status  (CSK)
-
+#ifdef DEBUG
+	print_log("parkIdler(): new oldBearingPosition : ");
+	println_log(oldBearingPosition);
+#endif
 	idlerturnamount(newSetting, CCW); // move the bearing roller out of the way
 	idlerStatus = INACTIVE;
 
@@ -1168,10 +1226,16 @@ void unParkIdler()
 
 	digitalWrite(idlerEnablePin, ENABLE); // turn on (enable) the roller bearing motor
 	delay(1);							  // wait for 10 useconds
-
+#ifdef DEBUG
+	print_log("unParkIdler(): oldBearingPosition : ");
+	println_log(oldBearingPosition);
+#endif
 	rollerSetting = MAXROLLERTRAVEL - bearingAbsPos[filamentSelection];
 	oldBearingPosition = bearingAbsPos[filamentSelection]; // update the idler bearing position
-
+#ifdef DEBUG
+	print_log("unParkIdler(): new oldBearingPosition : ");
+	println_log(oldBearingPosition);
+#endif
 	idlerturnamount(rollerSetting, CW); // restore the old position
 	idlerStatus = ACTIVE;				// mark the idler as active
 
@@ -1191,13 +1255,17 @@ void quickParkIdler()
 	delay(1);
 
 	idlerturnamount(IDLERSTEPSIZE, CCW);
-
+#ifdef DEBUG
+	print_log("quickParkIdler(): oldBearingPosition : ");
+	println_log(oldBearingPosition);
+#endif
 	oldBearingPosition = oldBearingPosition + IDLERSTEPSIZE; // record the current position of the IDLER bearing
 	idlerStatus = QUICKPARKED;								 // use this new state to show the idler is pending the 'C0' command
+#ifdef DEBUG
+	print_log("quickParkIdler(): new oldBearingPosition : ");
+	println_log(oldBearingPosition);
+#endif
 
-	//FIXME : Turn off idler ?
-	//digitalWrite(idlerEnablePin, DISABLE);    // turn off the roller bearing stepper motor  (nice to do, cuts down on CURRENT utilization)
-	digitalWrite(extruderEnablePin, DISABLE); // turn off the extruder stepper motor as well
 }
 
 /*****************************************************
@@ -1208,18 +1276,20 @@ void quickParkIdler()
  *****************************************************/
 void quickUnParkIdler()
 {
-	int rollerSetting;
-
-	rollerSetting = oldBearingPosition - IDLERSTEPSIZE; // go back IDLERSTEPSIZE units (hopefully re-enages the bearing
+	digitalWrite(idlerEnablePin, ENABLE);
+	delay(1);
 
 	idlerturnamount(IDLERSTEPSIZE, CW); // restore old position
-
-	print_log("quickunparkidler(): oldBearingPosition");
+#ifdef DEBUG
+	print_log("quickunparkidler(): oldBearingPosition : ");
 	println_log(oldBearingPosition);
-
-	oldBearingPosition = rollerSetting - IDLERSTEPSIZE; // keep track of the idler position
-
+#endif
+	oldBearingPosition = oldBearingPosition - IDLERSTEPSIZE; // keep track of the idler position
 	idlerStatus = ACTIVE; // mark the idler as active
+#ifdef DEBUG
+	print_log("quickunparkidler(): new oldBearingPosition : ");
+	println_log(oldBearingPosition);
+#endif
 }
 
 /***************************************************************************************************************
@@ -1462,7 +1532,6 @@ bool filamentLoadWithBondTechGear()
 	}
 
 	stepCount = 0;
-	digitalWrite(greenLED, HIGH); // turn on the green LED (for debug purposes)
 
 	// feed the filament from the MMU2 into the bondtech gear
 #ifdef IR_ON_MMU
@@ -1494,13 +1563,12 @@ bool filamentLoadWithBondTechGear()
 		++stepCount;
 		delayFactor = fist_segment_delay - (micros() - now);
 	}
-	digitalWrite(greenLED, LOW); // turn off the green LED (for debug purposes)
 
 #ifdef DEBUG
 	println_log("C Command: parking the idler");
 #endif
 
-	parkIdler();
+	quickParkIdler();
 
 #ifdef FILAMENTSWITCH_ON_EXTRUDER
 	//Wait for MMU code in Marlin to load the filament and activate the filament switch
