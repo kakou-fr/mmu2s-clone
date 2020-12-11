@@ -32,8 +32,8 @@
 #define X_MICROSTEPS 16
 
 #define Y_ENABLE_PIN PB12
-#define Y_STEP_PIN PB14
-#define Y_DIR_PIN PB12
+#define Y_STEP_PIN PB13
+#define Y_DIR_PIN PB14
 #define Y_RSENSE 0.11
 #define Y_MICROSTEPS 16
 
