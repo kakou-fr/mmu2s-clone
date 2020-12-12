@@ -265,6 +265,36 @@ continue_processing:
 } // end of init() routine
 
 
+#ifdef TMC_DEBUG
+template<typename TMC>
+static bool test_connection(TMC &st) 
+{
+  const uint8_t test_result = st.test_connection();
+  switch (test_result) {
+    case 0: println_log("OK"); break;
+    case 1: println_log("HIGH"); break;
+    case 2: println_log("LOW"); break;
+    default:
+      break;
+  }
+  return test_result;
+}
+
+void test_tmc_connection()
+{
+  uint8_t axis_connection = 0;
+  println_log("connection... ");
+  print_log("Idler :");
+  axis_connection += test_connection(idlerDriver);
+  print_log("Extruder :");
+  axis_connection += test_connection(extruderDriver);
+#ifdef MMU2S
+  print_log("Selector:");
+  axis_connection += test_connection(colorSelectorDriver);
+#endif
+  if(axis_connection) println_log("TMC ERROR");
+}
+#endif //TMC_DEGUBG
 
 /*****************************************************
  * 
@@ -325,6 +355,12 @@ void Application::loop()
 			parkIdler();			 // park the idler motor and turn it off
 		}
 #ifdef DEBUGMODE
+#ifdef USE_TMC
+		if (BUFFER_SERIAL_USB[0] == 'Y')
+		{
+			test_tmc_connection();
+		}
+#endif
 		if (BUFFER_SERIAL_USB[0] == 'Z')
 		{
 #ifdef MMU2S

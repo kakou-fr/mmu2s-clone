@@ -9,7 +9,7 @@
 
 #define USE_TMC_SENSORLESS
 #define TMC_SG_THR_IDL     20  //TMC2209 set to about 20, TMC2130 Set to about 19
-#define TMC_SG_THR_SEL     20  //TMC2209 set to about 20, TMC2130 Set to about 19
+#define TMC_SG_THR_SEL     50  //TMC2209 set to about 20, TMC2130 Set to about 19
 
 //
 // Software serial

@@ -4,6 +4,7 @@
 
 #define DEBUG
 #define DEBUGMODE
+#define TMC_DEBUG
 #define SERIAL1ENABLED    1
 #define S1_WAIT_TIME 100  //wait time for serial 1 (mmu<->printer)
 
