@@ -93,10 +93,8 @@
 //BROWN = +5V
 //BLUE = GND
 //BLACK = SIGNAL
-// X_MIN_PIN
-#define findaPin Z_STOP_PIN
 // Z_MIN_PIN
-#define colorSelectorEnstop X_STOP_PIN
+#define findaPin Z_STOP_PIN
 #endif
 
 #ifdef  IR_ON_MMU

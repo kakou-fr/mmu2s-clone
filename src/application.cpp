@@ -163,7 +163,9 @@ continue_processing:
 	pinMode(colorSelectorEnablePin, OUTPUT);
 	pinMode(colorSelectorDirPin, OUTPUT);
 	pinMode(colorSelectorStepPin, OUTPUT);
-	pinMode(colorSelectorEnstop, INPUT_PULLUP); // enstop switch sensor
+#ifndef USE_TMC_SENSORLESS
+	pinMode(colorSelectorEndstop, INPUT_PULLUP); // enstop switch sensor
+#endif
 #endif
 
 	println_log("finished setting up input and output pins");
@@ -330,7 +332,7 @@ void Application::loop()
 			int fstatus = digitalRead(findaPin);
 			println_log(fstatus);
 			print_log("colorSelectorEnstop status: ");
-			int cdenstatus = digitalRead(colorSelectorEnstop);
+			int cdenstatus = digitalRead(colorSelectorEndstop);
 			println_log(cdenstatus);
 #endif
 #ifdef IR_ON_MMU
@@ -786,8 +788,13 @@ void csTurnAmount(int steps, int direction)
 		delayMicroseconds(PINLOW);					// delay for 10 useconds
 		delayMicroseconds(COLORSELECTORMOTORDELAY); // wait for 60 useconds
 		//add enstop
-		if ((digitalRead(colorSelectorEnstop) == LOW) && (direction == CW))
+#ifdef USE_TMC_SENSORLESS
+		if ((digitalRead(colorSelectorEndstop) == HIGH) && (direction == CW))
 			break;
+#else
+		if ((digitalRead(colorSelectorEndstop) == LOW) && (direction == CW))
+			break;
+#endif
 	}
 
 #ifdef TURNOFFSELECTORMOTOR
@@ -1033,7 +1040,11 @@ void feedFilament(unsigned int steps, int stoptoextruder)
 		if ((stoptoextruder) && isFilamentLoadedtoExtruder())
 			break;
 #else
-//TODO
+		if('A' == SerialPRINTER.read())
+		{
+			println_log("feedFilament: A received");
+			break;
+		}
 #endif
 	}
 }
