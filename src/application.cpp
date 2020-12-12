@@ -216,8 +216,21 @@ continue_processing:
 	extruderDriver.GSTAT(0b111); // Clear
 
 #ifdef MMU2S
-	digitalWrite(colorSelectorEnablePin, ENABLE);
+	digitalWrite(colorSelectorEnablePin, DISABLE);
 	colorSelectorDriver.beginSerial(TMC_BAUD_RATE);
+
+	colorSelectorDriver.GCONF(gconf.sr);
+
+	colorSelectorDriver.toff(5); // Enables driver in software
+	colorSelectorDriver.rms_current(colorSelectorRMSCurrent, HOLD_MULTIPLIER);
+	colorSelectorDriver.microsteps(colorSelectorMicrosteps);
+	colorSelectorDriver.iholddelay(10);
+	colorSelectorDriver.TPOWERDOWN(128); // ~2s until driver lowers to hold current
+#ifdef USE_TMC_SENSORLESS
+	idlerDriver.SGTHRS(TMC_SG_THR_SEL);
+#endif
+	colorSelectorDriver.PWMCONF(pwmconf.sr);
+	colorSelectorDriver.GSTAT(0b111); // Clear
 #endif
 
 #else

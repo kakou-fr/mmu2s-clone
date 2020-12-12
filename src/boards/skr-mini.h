@@ -9,6 +9,7 @@
 
 #define USE_TMC_SENSORLESS
 #define TMC_SG_THR_IDL     20  //TMC2209 set to about 20, TMC2130 Set to about 19
+#define TMC_SG_THR_SEL     20  //TMC2209 set to about 20, TMC2130 Set to about 19
 
 //
 // Software serial
@@ -64,6 +65,7 @@
 #define colorSelectorSerialTXPin X_SERIAL_TX_PIN
 #define colorSelectorRSense X_RSENSE
 #define colorSelectorMicrosteps X_MICROSTEPS
+#define colorSelectorEndstop X_STOP_PIN
 #endif
 
 // Roller selector stepper motor
@@ -92,9 +94,9 @@
 //BLUE = GND
 //BLACK = SIGNAL
 // X_MIN_PIN
-#define findaPin X_STOP_PIN
+#define findaPin Z_STOP_PIN
 // Z_MIN_PIN
-#define colorSelectorEnstop Z_STOP_PIN
+#define colorSelectorEnstop X_STOP_PIN
 #endif
 
 #ifdef  IR_ON_MMU
