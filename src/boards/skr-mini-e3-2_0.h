@@ -104,12 +104,14 @@
 //PIN https://github.com/bigtreetech/BIGTREETECH-SKR-MINI-V1.1/blob/master/hardware/SKR-mini-V1.1-PIN.pdf
 // RST RX0 TX0 GND +5V
 
-#define SerialPRINTER Serial2 
-/*
+//#define SerialPRINTER  Serial2 
+
 #include <SoftwareSerial.h>
-SoftwareSerial Serials(PB7,PC13); // RX, TX 
+#define SF_SERIAL
 #define SerialPRINTER Serials
-*/
+#define SSERIAL_RX PA3
+#define SSERIAL_TX PA2
+
 
 #define USB_CONNECT_PIN                     PA14
-#define USB_CONNECT_INVERTING false
+#define USB_CONNECT_STATUS                  LOW

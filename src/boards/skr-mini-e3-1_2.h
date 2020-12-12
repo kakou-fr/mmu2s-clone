@@ -116,4 +116,4 @@ SoftwareSerial Serials(PB7,PC13); // RX, TX
 */
 
 #define USB_CONNECT_PIN                     PC13
-#define USB_CONNECT_INVERTING false
+#define USB_CONNECT_STATUS                  LOW

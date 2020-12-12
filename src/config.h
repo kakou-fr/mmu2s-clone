@@ -41,7 +41,7 @@
 // classic MMU2S
 #define MMU2S
 // splitter version (without color selector)
-//#define MMU2_1S
+// #define MMU2_1S
 
 
 //*************************************************************************************
@@ -121,7 +121,7 @@
 //  #include "boards/melzi.h"
 //  #include "boards/skr-mini-e3-1_2.h"
 //  #include "boards/skr-mini-e3-2_0.h"
-//  #include "boards/skr-mini-e3-dip-1_1.h"
+//#include "boards/skr-mini-e3-dip-1_1.h"
 // AVR and other
 #define ConsoleSerial Serial
 

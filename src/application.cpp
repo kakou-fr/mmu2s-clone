@@ -92,6 +92,10 @@ int colorSelectorStatus = INACTIVE;
 int findaStatus = 0;
 #endif
 
+#ifdef  SF_SERIAL
+SoftwareSerial Serials(SSERIAL_RX,SSERIAL_TX); // RX, TX 
+#endif
+
 /*****************************************************
  *
  * Init the MMU, pin, Serial, ...
@@ -102,11 +106,11 @@ void Application::setup()
 	int waitCount;
 
 #ifdef SERIAL_DEBUG
-#if defined(USB_CONNECT_PIN) && defined(USB_CONNECT_INVERTING)
+#if defined(USB_CONNECT_PIN) && defined(USB_CONNECT_STATUS)
 	pinMode(USB_CONNECT_PIN, OUTPUT);
-	digitalWrite(USB_CONNECT_PIN, (!USB_CONNECT_INVERTING) ? HIGH : LOW); // USB clear connection
+	digitalWrite(USB_CONNECT_PIN, !USB_CONNECT_STATUS); // USB clear connection
 	delay(1000);														  // Give OS time to notice
-	digitalWrite(USB_CONNECT_PIN, USB_CONNECT_INVERTING ? HIGH : LOW);
+	digitalWrite(USB_CONNECT_PIN, USB_CONNECT_STATUS);
 #endif
 #endif
 
@@ -214,6 +218,9 @@ continue_processing:
 	extruderDriver.microsteps(extruderMicrosteps);
 	extruderDriver.iholddelay(10);
 	extruderDriver.TPOWERDOWN(128); // ~2s until driver lowers to hold current
+#ifdef USE_TMC_SENSORLESS
+	extruderDriver.SGTHRS(TMC_SG_THR_SEL);
+#endif
 	extruderDriver.PWMCONF(pwmconf.sr);
 	extruderDriver.GSTAT(0b111); // Clear
 
