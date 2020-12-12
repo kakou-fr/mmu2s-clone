@@ -789,8 +789,10 @@ void csTurnAmount(int steps, int direction)
 		delayMicroseconds(COLORSELECTORMOTORDELAY); // wait for 60 useconds
 		//add enstop
 #ifdef USE_TMC_SENSORLESS
-		if ((digitalRead(colorSelectorEndstop) == HIGH) && (direction == CW))
+		if (digitalRead(colorSelectorEndstop) == HIGH){
+			delay(200);
 			break;
+		}
 #else
 		if ((digitalRead(colorSelectorEndstop) == LOW) && (direction == CW))
 			break;
