@@ -813,7 +813,9 @@ void initColorSelector()
 
 	digitalWrite(colorSelectorEnablePin, ENABLE);		   // turn on the stepper motor
 	delay(1);											   // wait for 1 millisecond
+#ifndef USE_TMC_SENSORLESS	
 	csTurnAmount(MAXSELECTOR_STEPS, CW);				   // move to the right
+#endif
 	csTurnAmount(MAXSELECTOR_STEPS + CS_RIGHT_FORCE, CCW); // move all the way to the left
 	digitalWrite(colorSelectorEnablePin, DISABLE);		   // turn off the stepper motor
 }
