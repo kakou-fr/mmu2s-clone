@@ -207,7 +207,7 @@ continue_processing:
 #endif
 	idlerDriver.PWMCONF(pwmconf.sr);
 	idlerDriver.GSTAT(0b111); // Clear
-	/*****   GEAR  ******/
+	/*****   extruder  ******/
 	digitalWrite(extruderEnablePin, DISABLE);
 	extruderDriver.beginSerial(TMC_BAUD_RATE);
 

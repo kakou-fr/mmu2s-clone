@@ -3,6 +3,7 @@
 
 #define USE_TMC_SENSORLESS
 #define TMC_SG_THR_IDL     20  //TMC2209 set to about 20, TMC2130 Set to about 19
+#define TMC_SG_THR_SEL     50
 
 #define HOLD_MULTIPLIER    0.5
 #define TMC_BAUD_RATE 19200 // Reduce baud rate to improve software serial reliability
@@ -104,13 +105,13 @@
 //PIN https://github.com/bigtreetech/BIGTREETECH-SKR-MINI-V1.1/blob/master/hardware/SKR-mini-V1.1-PIN.pdf
 // RST RX0 TX0 GND +5V
 
-//#define SerialPRINTER  Serial2 
+#define SerialPRINTER  Serial2 
 
-#include <SoftwareSerial.h>
-#define SF_SERIAL
-#define SerialPRINTER Serials
-#define SSERIAL_RX PA3
-#define SSERIAL_TX PA2
+// #include <SoftwareSerial.h>
+// #define SF_SERIAL
+// #define SerialPRINTER Serials
+// #define SSERIAL_RX PA3
+// #define SSERIAL_TX PA2
 
 
 #define USB_CONNECT_PIN                     PA14
