@@ -3,14 +3,10 @@
 
 
 #define DEBUG
-#define DEBUGMODE
-#define TMC_DEBUG
-#define SERIAL1ENABLED    1
-#define S1_WAIT_TIME 100  //wait time for serial 1 (mmu<->printer)
-
 #define SERIAL_INTERACTIVE  // allow to control the MMU from USB interface
-#define SERIAL_DEBUG
 
+
+#define S1_WAIT_TIME 100  //wait time for serial 1 (mmu<->printer)
 
 //STEPPER
 #define ENABLE LOW                // 8825 stepper motor enable is active low
@@ -41,7 +37,7 @@
 // classic MMU2S
 #define MMU2S
 // splitter version (without color selector)
-// #define MMU2_1S
+//#define MMU2_1S
 
 
 //*************************************************************************************
@@ -88,7 +84,7 @@
 #define TOOLSYNC 5                         // number of tool change (T) commands before a selector resync is performed
 #define MAXSELECTOR_STEPS   1800//1890   // maximum number of selector stepper motor (used to move all the way to the right or left
 #define CSSTEPS 357
-#define CS_RIGHT_FORCE 20
+#define CS_RIGHT_FORCE 100
 #define CS_RIGHT_FORCE_SELECTOR_0 5
 #define COLORSELECTORMOTORDELAY 60 // 60 useconds    (selector motor)
 // Distance to restract the filament into the MMU 
@@ -103,11 +99,11 @@
 //*************************************************************************************************
 //  SENSORS
 //*************************************************************************************************
-#define PindaON 0
+#define PindaON 1
 
 //#define IR_ON_MMU // define if IR is connected on the MMU board, comment if IR is on printer board
 #ifdef  IR_ON_MMU
-#define filamentSwitchON 1
+#define filamentSwitchON 0
 //#define FILAMENTSWITCH_BEFORE_EXTRUDER // turn on if the filament switch is before the extruder, turn off for the mk3s-mmu filament switch
 #define FILAMENTSWITCH_ON_EXTRUDER // turn on if the filament switch on is the extruder, turn on for the mk3s-mmu filament switch
 #endif
@@ -120,24 +116,30 @@
 //  #include "boards/gt2560.h"
 //  #include "boards/melzi.h"
 //  #include "boards/skr-mini-e3-1_2.h"
-// #include "boards/skr-mini-e3-2_0.h"
-//#include "boards/skr-mini-e3-dip-1_1.h"
-// AVR and other
-#define ConsoleSerial Serial
-
-// for LPC176x
-//#define CDC_SERIAL
-//#define ConsoleSerial UsbSerial
-//#include "boards/skr-1.3.h"
+//  #include "boards/skr-mini-e3-2_0.h"
+//  #include "boards/skr-mini-e3-dip-1_1.h"
+//  #include "boards/skr-1.3.h"
 //  #include "boards/skr-1.4.h"
 //  #include "boards/skr-1.4-turbo.h"
 
 
 
-
-
-#if defined(CDC_SERIAL)
+//*************************************************************************************************
+//  SERIAL <-> PRINTER
+//*************************************************************************************************
+#ifdef CDC_SERIAL
 #include <CDCSerial.h>
-#endif 
+#define ConsoleSerial UsbSerial
+#endif
+#ifdef USB_SERIAL
+  extern USBSerial SerialUSB;
+  #define ConsoleSerial SerialUSB
+#endif
+#if !defined(CDC_SERIAL) && !defined(USB_SERIAL)
+// AVR and other
+#define ConsoleSerial Serial
+#endif
+
+//*************************************************************************************************
 
 #endif

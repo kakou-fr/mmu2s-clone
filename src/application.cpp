@@ -96,6 +96,10 @@ int findaStatus = 0;
 SoftwareSerial Serials(SSERIAL_RX,SSERIAL_TX); // RX, TX 
 #endif
 
+#ifdef USB_SERIAL
+USBSerial SerialUSB;
+#endif
+
 /*****************************************************
  *
  * Init the MMU, pin, Serial, ...
@@ -105,7 +109,7 @@ void Application::setup()
 {
 	int waitCount;
 
-#ifdef SERIAL_DEBUG
+#ifdef SERIAL_INTERACTIVE
 #if defined(USB_CONNECT_PIN) && defined(USB_CONNECT_STATUS)
 	pinMode(USB_CONNECT_PIN, OUTPUT);
 	digitalWrite(USB_CONNECT_PIN, !USB_CONNECT_STATUS); // USB clear connection
@@ -268,7 +272,7 @@ continue_processing:
 } // end of init() routine
 
 
-#ifdef TMC_DEBUG
+#ifdef USE_TMC
 template<typename TMC>
 static bool test_connection(TMC &st) 
 {
@@ -297,7 +301,7 @@ void test_tmc_connection()
 #endif
   if(axis_connection) println_log("TMC ERROR");
 }
-#endif //TMC_DEGUBG
+#endif
 
 /*****************************************************
  * 
@@ -357,7 +361,7 @@ void Application::loop()
 			unloadFilamentToFinda(); //unload the filament
 			parkIdler();			 // park the idler motor and turn it off
 		}
-#ifdef DEBUGMODE
+#ifdef DEBUG
 #ifdef USE_TMC
 		if (BUFFER_SERIAL_USB[0] == 'Y')
 		{
@@ -680,8 +684,6 @@ void fixTheProblem(const char *statement)
 	delay(1); // wait for 1 millisecond
 }
 
-#ifdef MMU2S
-
 /***************************************************************************************************************
  ***************************************************************************************************************
  * 
@@ -705,6 +707,8 @@ void tmc_disable_stallguard(TMC2209Stepper &st, const bool restore_stealth) {
   st.TCOOLTHRS(0);
 }
 #endif
+
+#ifdef MMU2S
 
 /***************************************************************************************************************
  ***************************************************************************************************************

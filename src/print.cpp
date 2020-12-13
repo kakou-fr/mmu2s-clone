@@ -10,7 +10,7 @@ IOPrint::IOPrint()
 
 void IOPrint::setup()
 {
-#ifdef SERIAL_DEBUG
+#ifdef SERIAL_INTERACTIVE
 #if defined(CDC_SERIAL)
 	USB_Init();			// USB Initialization
 	USB_Connect(FALSE); // USB clear connection
@@ -29,7 +29,7 @@ void IOPrint::setup()
 
 void println_log(String msg)
 {
-#ifdef SERIAL_DEBUG
+#ifdef SERIAL_INTERACTIVE
     ConsoleSerial.println(msg);
 #endif
 }
@@ -37,35 +37,35 @@ void println_log(String msg)
 
 void println_log(int msg)
 {
-#ifdef SERIAL_DEBUG
+#ifdef SERIAL_INTERACTIVE
     ConsoleSerial.println(msg);
 #endif
 }
 
 void println_log(unsigned int msg)
 {
-#ifdef SERIAL_DEBUG
+#ifdef SERIAL_INTERACTIVE
     ConsoleSerial.println(msg);
 #endif
 }
 
 void println_log(char msg)
 {
-#ifdef SERIAL_DEBUG
+#ifdef SERIAL_INTERACTIVE
     ConsoleSerial.println(msg);
 #endif
 }
 
 void print_log(String msg)
 {
-#ifdef SERIAL_DEBUG
+#ifdef SERIAL_INTERACTIVE
     ConsoleSerial.print(msg);
 #endif
 }
 
 void print_log(char msg)
 {
-#ifdef SERIAL_DEBUG
+#ifdef SERIAL_INTERACTIVE
     ConsoleSerial.println(msg);
 #endif
 }

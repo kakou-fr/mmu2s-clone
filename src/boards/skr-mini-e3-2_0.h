@@ -1,19 +1,25 @@
 #define USE_TMC
 #define SOFTWARE_RESET
 
+#ifdef USE_TMC
+#define HOLD_MULTIPLIER    0.5
+#define TMC_BAUD_RATE 19200 // Reduce baud rate to improve software serial reliability
+#define TMC_STEALTH_MODE true
+
 #define USE_TMC_SENSORLESS
 #define TMC_SG_THR_IDL     20  //TMC2209 set to about 20, TMC2130 Set to about 19
 #define TMC_SG_THR_SEL     50
 
-#define HOLD_MULTIPLIER    0.5
-#define TMC_BAUD_RATE 19200 // Reduce baud rate to improve software serial reliability
-
+//
+// Software serial
+//
 #define SERIAL_TX_PIN                  PC10
 #define SERIAL_RX_PIN                  PC11
 #define X_SERIAL_ADDRESS                 0
 #define Y_SERIAL_ADDRESS                 2
 #define Z_SERIAL_ADDRESS                 1
 #define E0_SERIAL_ADDRESS                3
+#endif
 
 //
 // Steppers
@@ -52,15 +58,16 @@
 
 #ifdef MMU2S
 // Color selector stepper motor (driven by trapezoidal screw)
-#define colorSelectorStepPin X_STEP_PIN
-#define colorSelectorDirPin  X_DIR_PIN
-#define colorSelectorEnablePin X_ENABLE_PIN
+#define colorSelectorStepPin Z_STEP_PIN
+#define colorSelectorDirPin  Z_DIR_PIN
+#define colorSelectorEnablePin Z_ENABLE_PIN
 #define colorSelectorRMSCurrent 750
 #define colorSelectorSerialRXPin SERIAL_RX_PIN
 #define colorSelectorSerialTXPin SERIAL_TX_PIN
-#define colorSelectorRSense X_RSENSE
-#define colorSelectorMicrosteps X_MICROSTEPS
-#define colorAddress X_SERIAL_ADDRESS
+#define colorSelectorRSense Z_RSENSE
+#define colorSelectorMicrosteps Z_MICROSTEPS
+#define colorAddress Z_SERIAL_ADDRESS
+#define colorSelectorEndstop Z_STOP_PIN
 #endif
 
 // Roller selector stepper motor
@@ -88,24 +95,21 @@
 
 
 #ifdef MMU2S
-#define findaPin  X_STOP_PIN
-#define colorSelectorEnstop Z_STOP_PIN
+//BROWN = +5V
+//BLUE = GND
+//BLACK = SIGNAL
+// Z_MIN_PIN
+#define findaPin Z_STOP_PIN
 #endif
 
 #ifdef  IR_ON_MMU
-#define filamentSwitch FIL_RUNOUT_PIN
+// Z_MAX_PIN
+#define filamentSwitch Z_MAX_STOP_PIN
 #endif
 
-//SKR MINI E3
-//TFT PIN
+//#define USB_SERIAL
 
-//SCH https://raw.githubusercontent.com/bigtreetech/BIGTREETECH-SKR-MINI-V1.1/master/hardware/SKR-mini-V1.1sch.pdf
-// RX2 TX2 
-
-//PIN https://github.com/bigtreetech/BIGTREETECH-SKR-MINI-V1.1/blob/master/hardware/SKR-mini-V1.1-PIN.pdf
-// RST RX0 TX0 GND +5V
-
-#define SerialPRINTER  Serial2 
+#define SerialPRINTER  Serial2
 
 // #include <SoftwareSerial.h>
 // #define SF_SERIAL

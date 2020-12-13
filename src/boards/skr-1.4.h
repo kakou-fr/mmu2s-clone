@@ -1,4 +1,5 @@
 #include <lpc17xx.h>
+#define CDC_SERIAL
 
 //#define USE_TMC
 #define HOLD_MULTIPLIER 0.5
