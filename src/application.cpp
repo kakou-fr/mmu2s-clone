@@ -218,9 +218,6 @@ continue_processing:
 	extruderDriver.microsteps(extruderMicrosteps);
 	extruderDriver.iholddelay(10);
 	extruderDriver.TPOWERDOWN(128); // ~2s until driver lowers to hold current
-#ifdef USE_TMC_SENSORLESS
-	extruderDriver.SGTHRS(TMC_SG_THR_SEL);
-#endif
 	extruderDriver.PWMCONF(pwmconf.sr);
 	extruderDriver.GSTAT(0b111); // Clear
 
@@ -236,7 +233,7 @@ continue_processing:
 	colorSelectorDriver.iholddelay(10);
 	colorSelectorDriver.TPOWERDOWN(128); // ~2s until driver lowers to hold current
 #ifdef USE_TMC_SENSORLESS
-	idlerDriver.SGTHRS(TMC_SG_THR_SEL);
+	colorSelectorDriver.SGTHRS(TMC_SG_THR_SEL);
 #endif
 	colorSelectorDriver.PWMCONF(pwmconf.sr);
 	colorSelectorDriver.GSTAT(0b111); // Clear
