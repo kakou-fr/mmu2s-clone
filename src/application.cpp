@@ -854,17 +854,16 @@ void csTurnAmount(int steps, int direction)
 		delayMicroseconds(PINHIGH); // delay for 10 useconds
 		digitalWrite(colorSelectorStepPin, LOW);
 		delayMicroseconds(PINLOW);					// delay for 10 useconds
-		delayMicroseconds(COLORSELECTORMOTORDELAY); // wait for 60 useconds
 		//add enstop
 #ifdef USE_TMC_SENSORLESS
 		if (digitalRead(colorSelectorEndstop) == HIGH){
-			delay(200);
 			break;
 		}
 #else
 		if ((digitalRead(colorSelectorEndstop) == LOW) && (direction == CW))
 			break;
 #endif
+		delayMicroseconds(COLORSELECTORMOTORDELAY); // wait for 60 useconds
 	}
 
 #ifdef USE_TMC_SENSORLESS
@@ -887,7 +886,9 @@ void initColorSelector()
 
 	digitalWrite(colorSelectorEnablePin, ENABLE);		   // turn on the stepper motor
 	delay(1);											   // wait for 1 millisecond
-#ifndef USE_TMC_SENSORLESS	
+#ifdef USE_TMC_SENSORLESS	
+    csTurnAmount(MAXSELECTOR_STEPS/2, CW);
+#else
 	csTurnAmount(MAXSELECTOR_STEPS, CW);				   // move to the right
 #endif
 	csTurnAmount(MAXSELECTOR_STEPS + CS_RIGHT_FORCE, CCW); // move all the way to the left
