@@ -6,6 +6,7 @@
 
 #define HOLD_MULTIPLIER 0.5
 #define TMC_BAUD_RATE 19200 // Reduce baud rate to improve software serial reliability
+#define TMC_STEALTH_MODE true
 
 #define USE_TMC_SENSORLESS
 #define TMC_SG_THR_IDL     20  //TMC2209 set to about 20, TMC2130 Set to about 19

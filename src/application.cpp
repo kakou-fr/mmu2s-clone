@@ -176,12 +176,11 @@ continue_processing:
 
 #ifdef USE_TMC
     /***** ******/
-	bool stealth = false;
 	TMC2208_n::GCONF_t gconf{0};
 	gconf.pdn_disable = true;	   // Use UART
 	gconf.mstep_reg_select = true; // Select microsteps with UART
 	gconf.i_scale_analog = false;
-	gconf.en_spreadcycle = !stealth;
+	gconf.en_spreadcycle = !TMC_STEALTH_MODE;
 	TMC2208_n::PWMCONF_t pwmconf{0};
 	pwmconf.pwm_lim = 12;
 	pwmconf.pwm_reg = 8;
@@ -682,6 +681,31 @@ void fixTheProblem(const char *statement)
 }
 
 #ifdef MMU2S
+
+/***************************************************************************************************************
+ ***************************************************************************************************************
+ * 
+ * TMC Function
+ * 
+ ***************************************************************************************************************
+ **************************************************************************************************************/
+
+
+#ifdef USE_TMC_SENSORLESS
+uint8_t tmc_enable_stallguard(TMC2209Stepper &st) {
+  uint8_t stealthchop_was_enabled = !st.en_spreadCycle();
+  delay(5);
+  st.TCOOLTHRS(0xFFFF);
+  st.en_spreadCycle(false);
+  return stealthchop_was_enabled;
+}
+
+void tmc_disable_stallguard(TMC2209Stepper &st, const bool restore_stealth) {
+  st.en_spreadCycle(!restore_stealth);
+  st.TCOOLTHRS(0);
+}
+#endif
+
 /***************************************************************************************************************
  ***************************************************************************************************************
  * 
@@ -820,6 +844,10 @@ void csTurnAmount(int steps, int direction)
 	println_log(scount);
 #endif
 
+#ifdef USE_TMC_SENSORLESS
+	uint8_t mode = tmc_enable_stallguard(colorSelectorDriver);
+#endif
+
 	for (uint16_t i = 0; i <= (steps * STEPSIZE); i++)
 	{
 		digitalWrite(colorSelectorStepPin, HIGH);
@@ -838,6 +866,10 @@ void csTurnAmount(int steps, int direction)
 			break;
 #endif
 	}
+
+#ifdef USE_TMC_SENSORLESS
+	tmc_disable_stallguard(colorSelectorDriver,mode);
+#endif
 
 #ifdef TURNOFFSELECTORMOTOR
 	digitalWrite(colorSelectorEnablePin, DISABLE); // turn off the color selector motor
@@ -1015,20 +1047,8 @@ void idlerturnamount(int steps, int dir)
 	}
 } // end of idlerturnamount() routine
 
+
 #ifdef USE_TMC_SENSORLESS
-uint8_t tmc_enable_stallguard(TMC2209Stepper &st) {
-  uint8_t stealthchop_was_enabled = !st.en_spreadCycle();
-  delay(5);
-  st.TCOOLTHRS(0xFFFF);
-  st.en_spreadCycle(false);
-  return stealthchop_was_enabled;
-}
-
-void tmc_disable_stallguard(TMC2209Stepper &st, const bool restore_stealth) {
-  st.en_spreadCycle(!restore_stealth);
-  st.TCOOLTHRS(0);
-}
-
 void idlerturnamountStopAtEndstop(int steps, int dir)
 {
 	uint8_t stealth = tmc_enable_stallguard(idlerDriver);
