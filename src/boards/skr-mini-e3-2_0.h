@@ -109,12 +109,13 @@
 
 //#define USB_SERIAL
 
-#define SerialPRINTER  Serial2
+//#define SerialPRINTER  Serial2  //TFT
+#define SerialPRINTER  Serial1    //EXP1
 
 // #include <SoftwareSerial.h>
 // #define SF_SERIAL
 // #define SerialPRINTER Serials
-// #define SSERIAL_RX PA3
+// #define SSERIAL_RX PC2
 // #define SSERIAL_TX PA2
 
 

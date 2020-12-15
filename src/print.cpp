@@ -17,12 +17,9 @@ void IOPrint::setup()
 	delay(1000);		// Give OS time to notice
 	USB_Connect(TRUE);
 #endif
-    ConsoleSerial.begin(250000); // startup the local serial interface (changed to 2 Mbaud on 10.7.18
-    //while (!ConsoleSerial)
-    //{
-        delay(200); // wait for serial port to connect. needed for native USB port only
-        ConsoleSerial.println("waiting for serial port");
-    //}
+    ConsoleSerial.begin(250000); 
+    delay(200); 
+    ConsoleSerial.println("waiting for serial port");
     
 #endif
 }

@@ -35,9 +35,9 @@
 //* MMU version
 //*************************************************************************************
 // classic MMU2S
-#define MMU2S
+// #define MMU2S
 // splitter version (without color selector)
-//#define MMU2_1S
+#define MMU2_1S
 
 
 //*************************************************************************************
@@ -112,11 +112,11 @@
 //  BOARD
 //*************************************************************************************************
 // select the board used for the MMU
-#include "boards/skr-mini.h"
+//#include "boards/skr-mini.h"
 //  #include "boards/gt2560.h"
 //  #include "boards/melzi.h"
 //  #include "boards/skr-mini-e3-1_2.h"
-//  #include "boards/skr-mini-e3-2_0.h"
+#include "boards/skr-mini-e3-2_0.h"
 //  #include "boards/skr-mini-e3-dip-1_1.h"
 //  #include "boards/skr-1.3.h"
 //  #include "boards/skr-1.4.h"
