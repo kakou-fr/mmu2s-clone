@@ -1,10 +1,6 @@
 #include <lpc17xx.h>
 #define CDC_SERIAL
 
-//#define USE_TMC
-#define HOLD_MULTIPLIER 0.5
-#define TMC_BAUD_RATE 19200 // Reduce baud rate to improve software serial reliability
-
 //
 // Software serial
 //
@@ -79,6 +75,7 @@
 #define colorSelectorRSense X_RSENSE
 #define colorSelectorMicrosteps X_MICROSTEPS
 #endif
+#define colorSelectorEndstop X_STOP_PIN
 #endif
 
 // Roller selector stepper motor
@@ -92,6 +89,7 @@
 #define idlerRSense Y_RSENSE
 #define idlerMicrosteps Y_MICROSTEPS
 #endif
+#define idlerEndstop Y_MIN_PIN
 
 // Extruder stepper motor
 #define extruderStepPin E0_STEP_PIN
@@ -105,16 +103,21 @@
 #define extruderMicrosteps E0_MICROSTEPS
 #endif
 
-#define findaPin X_MIN_PIN
-#define greenLED Y_MIN_PIN // added this pin as a debug pin (lights a green LED so I can see the 'C0' command in action
 
 #ifdef MMU2S
-#define colorSelectorEnstop Z_STOP_PIN
+//BROWN = +5V
+//BLUE = GND
+//BLACK = SIGNAL
+// Z_MIN_PIN
+#define findaPin Z_MIN_PIN
 #endif
 
+#ifdef  IR_ON_MMU
+// Z_MAX_PIN
 #define filamentSwitch FIL_RUNOUT_PIN
+#endif
 
-#define SerialPRINTER Serial
+#define SerialPRINTER Serial  // TFT  pins
 /*
 #include <SoftwareSerial.h>
 SoftwareSerial Serials(PB7,PC13); // RX, TX 

@@ -1,15 +1,9 @@
-// added this pin as a debug pin (lights a green LED so I can see the 'C0' command in action
-//Y_MIN_PIN
-#define greenLED 26
-
-// modified code on 10.2.18 to accomodate RAMPS 1.6 board mapping
-//
+// GT2560 A+
 
 // PIN Y
 #define idlerDirPin  33
 #define idlerStepPin 31
 #define idlerEnablePin 29
-
 
 // PIN Z
 #define extruderDirPin  39 //  pin 48 for extruder motor direction pin
@@ -17,22 +11,26 @@
 #define extruderEnablePin 35 //  pin A8 for extruder motor rst/sleep motor pin
 
 //PIN X
+#ifdef MMU2S
 #define colorSelectorDirPin  23 //color selector stepper motor (driven by trapezoidal screw)
 #define colorSelectorStepPin 25
 #define colorSelectorEnablePin 27
+#define colorSelectorEndstop 30 // Z_MIN_PIN
+#endif
 
-
+#ifdef MMU2S
 //BROWN = +5V
 //BLUE = GND
 //BLACK = SIGNAL
-//SERVo PIN GT2560
-#define findaPin  11
-
 // Z_MIN_PIN
-#define colorSelectorEnstop 30
+#define findaPin 11
+#endif
 
+#ifdef  IR_ON_MMU
 // Z_MAX_PIN
 #define filamentSwitch 32
+#endif
+
 
 
 // https://www.lesimprimantes3d.fr/forum/uploads/monthly_2018_10/Epson_29102018163351.jpg.9b3dec82b6691ac5af5c7ea2451e41b4.jpg

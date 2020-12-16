@@ -1,7 +1,13 @@
 #include "print.h"
 #include "config.h"
 
-char BUFFER[512];
+char* string2char(String command){
+    if(command.length()!=0){
+        char *p = const_cast<char*>(command.c_str());
+        return p;
+    }
+    return NULL;
+}
 
 IOPrint::IOPrint()
 {
@@ -27,7 +33,11 @@ void IOPrint::setup()
 void println_log(String msg)
 {
 #ifdef SERIAL_INTERACTIVE
+#ifdef CDC_SERIAL
+    ConsoleSerial.println(string2char(msg));
+#else
     ConsoleSerial.println(msg);
+#endif
 #endif
 }
 
@@ -56,7 +66,11 @@ void println_log(char msg)
 void print_log(String msg)
 {
 #ifdef SERIAL_INTERACTIVE
+#ifdef CDC_SERIAL
+    ConsoleSerial.print(string2char(msg));
+#else
     ConsoleSerial.print(msg);
+#endif
 #endif
 }
 

@@ -146,7 +146,7 @@ void Application::setup()
 		println_log("Waiting for message from mk3");
 		delay(1000);
 		++waitCount;
-		if (waitCount >= S1_WAIT_TIME)
+		if (waitCount >= S1_TRY_NUMBER)
 		{
 			println_log("X seconds have passed, aborting wait for printer board (Marlin) to respond");
 			goto continue_processing;
@@ -1211,7 +1211,11 @@ loop:
  *****************************************************/
 void unloadFilamentToFinda()
 {
-	unsigned long startTime, currentTime, startTime1;
+	unsigned long startTime, currentTime;
+#ifdef IR_ON_MMU
+	unsigned long startTime1;
+
+#endif
 	// if the filament is already unloaded, do nothing
 	if (!isFilamentLoadedPinda())
 	{
@@ -1228,7 +1232,10 @@ void unloadFilamentToFinda()
 	feedFilament(STEPSPERMM * 10, IGNORE_STOP_AT_EXTRUDER);
 #endif
 	startTime = millis();
+#ifdef IR_ON_MMU
 	startTime1 = millis();
+#endif
+
 
 #ifdef MMU2S
 loop:
@@ -1247,6 +1254,7 @@ loop:
 		}
 	}
 #endif
+
 	// check for timeout waiting for FINDA sensor to trigger
 	if ((currentTime - startTime) > TIMEOUT_LOAD_UNLOAD)
 	{
@@ -1539,8 +1547,8 @@ loop:
 	findaStatus = 1;
 #endif
 
-loop1:
 #ifdef IR_ON_MMU
+loop1:
 	if (isFilamentLoadedtoExtruder())
 	{
 		// switch is active (this is not a good condition)
