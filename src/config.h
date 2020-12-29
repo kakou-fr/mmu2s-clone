@@ -82,10 +82,11 @@
 
 #ifdef MMU2_1S
 #define DIST_MMU_EXTRUDER 120   // distance from tom of splitter to extruder gear
+//#define FILAMENTSWITCH_BEFORE_EXTRUDER
 #endif
 
 #ifdef FILAMENTSWITCH_BEFORE_EXTRUDER
-#define DIST_EXTRUDER_BTGEAR 30 // distance from IR to extruder gear
+#define DIST_EXTRUDER_BTGEAR 50 // distance from IR to extruder gear
 #endif
 
 

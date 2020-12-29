@@ -1560,6 +1560,7 @@ loop1:
 	feedFilament(STEPSPERMM * DIST_MMU_EXTRUDER, STOP_AT_EXTRUDER);
 
 #ifdef FILAMENTSWITCH_BEFORE_EXTRUDER
+#ifdef IR_ON_MMU
 	// insert until the 2nd filament sensor
 	filamentDistance = DIST_MMU_EXTRUDER;
 	startTime = millis();
@@ -1589,6 +1590,23 @@ loop1:
 	// feed filament an additional DIST_EXTRUDER_BTGEAR mm to hit the middle of the bondtech gear
 	// go an additional DIST_EXTRUDER_BTGEAR
 	feedFilament(STEPSPERMM * DIST_EXTRUDER_BTGEAR, IGNORE_STOP_AT_EXTRUDER);
+#else
+	const unsigned long fist_segment_delay = 2600;
+	int tSteps = DIST_EXTRUDER_BTGEAR * STEPSPERMM;
+	int delayFactor = fist_segment_delay;
+	digitalWrite(extruderEnablePin, ENABLE); // turn on the extruder stepper motor
+	digitalWrite(extruderDirPin, CCW);		 // set extruder stepper motor to push filament towards the mk3
+
+	for (int i = 0; i < tSteps; i++)
+	{
+		delayMicroseconds(delayFactor);
+		unsigned long now = micros();
+		digitalWrite(extruderStepPin, HIGH); // step the extruder stepper in the MMU2 unit
+		delayMicroseconds(PINHIGH);
+		digitalWrite(extruderStepPin, LOW);
+		delayFactor = fist_segment_delay - (micros() - now);
+	}
+#endif
 #endif
 }
 
@@ -1656,8 +1674,28 @@ bool filamentLoadWithBondTechGear()
 		if('A' == SerialPRINTER.read())
 		{
 			println_log("C Command: A received");
+#ifdef FILAMENTSWITCH_BEFORE_EXTRUDER
+	const unsigned long fist_segment_delay = 2600;
+	int tSteps = DIST_EXTRUDER_BTGEAR * STEPSPERMM;
+	int delayFactor = fist_segment_delay;
+	digitalWrite(extruderEnablePin, ENABLE); // turn on the extruder stepper motor
+	digitalWrite(extruderDirPin, CCW);		 // set extruder stepper motor to push filament towards the mk3
+
+	for (int i = 0; i < tSteps; i++)
+	{
+		delayMicroseconds(delayFactor);
+		unsigned long now = micros();
+		digitalWrite(extruderStepPin, HIGH); // step the extruder stepper in the MMU2 unit
+		delayMicroseconds(PINHIGH);
+		digitalWrite(extruderStepPin, LOW);
+		delayFactor = fist_segment_delay - (micros() - now);
+	}
+	parkIdler();
+	return true;
+#else
 			parkIdler();
 			return true;
+#endif
 		}
 		digitalWrite(extruderStepPin, HIGH); // step the extruder stepper in the MMU2 unit
 		delayMicroseconds(PINHIGH);
