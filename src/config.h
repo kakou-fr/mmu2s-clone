@@ -115,7 +115,7 @@
 //*************************************************************************************************
 //  EXTRUDER settings
 //*************************************************************************************************
-#define EXTRUDERMOTORDELAY 60               // 60 useconds, controls filament feed speed to the printer
+#define EXTRUDERMOTORDELAY 120               // 120 useconds, controls filament feed speed to the printer
 
 //*************************************************************************************************
 //  TMC settings for TMC2209

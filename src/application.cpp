@@ -1103,8 +1103,7 @@ void feedFilament(unsigned int steps, int stoptoextruder)
 		digitalWrite(extruderStepPin, LOW);
 		delayMicroseconds(PINLOW); // delay for 10 useconds
 
-		delayMicroseconds(EXTRUDERMOTORDELAY); // wait for 400 useconds
-		//delay(delayValue);           // wait for 30 milliseconds
+		delayMicroseconds(EXTRUDERMOTORDELAY);
 #ifdef IR_ON_MMU
 		if ((stoptoextruder) && isFilamentLoadedtoExtruder())
 			break;
